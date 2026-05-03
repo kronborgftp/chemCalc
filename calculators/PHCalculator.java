@@ -228,7 +228,7 @@ public class PHCalculator implements Calculator {
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /** Solves x^2 + K*x - K*C = 0 (standard weak acid/base quadratic). Returns positive root. */
-    static double solveWeakAcidQuadratic(double K, double C) {
+    public static double solveWeakAcidQuadratic(double K, double C) {
         // x^2 + K*x - K*C = 0
         double discriminant = K * K + 4 * K * C;
         return (-K + Math.sqrt(discriminant)) / 2.0;

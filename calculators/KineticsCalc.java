@@ -130,7 +130,7 @@ public class KineticsCalc implements Calculator {
         }
     }
 
-    private double calcA(int order, double A0, double k, double t) {
+    public static double calcA(int order, double A0, double k, double t) {
         return switch (order) {
             case 0 -> A0 - k * t;
             case 1 -> A0 * Math.exp(-k * t);
@@ -139,7 +139,7 @@ public class KineticsCalc implements Calculator {
         };
     }
 
-    private double calcT(int order, double A0, double A, double k) {
+    public static double calcT(int order, double A0, double A, double k) {
         return switch (order) {
             case 0 -> (A0 - A) / k;
             case 1 -> Math.log(A0 / A) / k;
@@ -148,7 +148,7 @@ public class KineticsCalc implements Calculator {
         };
     }
 
-    private double calcK(int order, double A0, double A, double t) {
+    public static double calcK(int order, double A0, double A, double t) {
         return switch (order) {
             case 0 -> (A0 - A) / t;
             case 1 -> Math.log(A0 / A) / t;

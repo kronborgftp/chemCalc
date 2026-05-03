@@ -12,9 +12,21 @@ javac chemistry/Element.java chemistry/PeriodicTable.java chemistry/FormulaParse
       calculators/EquilibriumCalc.java \
       calculators/StoichiometryCalc.java \
       ui/MenuSystem.java \
+      gui/BaseCalcPanel.java \
+      gui/HomePanel.java \
+      gui/EquationBalancerPanel.java \
+      gui/PHPanel.java \
+      gui/RedoxPanel.java \
+      gui/ThermodynamicsPanel.java \
+      gui/KineticsPanel.java \
+      gui/EquilibriumPanel.java \
+      gui/StoichiometryPanel.java \
+      gui/ReferencePanel.java \
+      gui/ChemApp.java \
       Main.java
 if [ $? -eq 0 ]; then
-    echo "Compiled successfully. Starting..."
+    echo "Compiled successfully. Starting GUI..."
+    echo "(Use 'java Main --cli' for terminal mode)"
     java Main
 else
     echo "Compilation failed."

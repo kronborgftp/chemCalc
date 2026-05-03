@@ -55,6 +55,16 @@ public class RedoxCalculator implements Calculator {
         printOxStates(formula, charge);
     }
 
+    /** Returns oxidation state analysis as a String (for GUI use). */
+    public String getOxStatesString(String formula, int netCharge) {
+        java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+        java.io.PrintStream old = System.out;
+        System.setOut(new java.io.PrintStream(buf));
+        printOxStates(formula, netCharge);
+        System.setOut(old);
+        return buf.toString();
+    }
+
     public void printOxStates(String formula, int netCharge) {
         Map<String, Integer> comp = FormulaParser.parse(formula);
         System.out.println("\n  Formula: " + formula + "  (net charge = " + netCharge + ")");
