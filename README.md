@@ -1,21 +1,29 @@
 # DTU Chemistry Exam Toolkit
 
-A command-line Java program covering all major calculation topics from the DTU 4th Semester Chemistry curriculum. Run it locally during your exam — no internet required.
+A Java program (GUI + CLI) covering all major calculation topics from the DTU 4th Semester Chemistry curriculum. Run it locally during your exam — no internet required.
 
 ## Getting Started
 
 **Requirements:** Java 17+ installed.
 
 ```bash
-./run.sh
+./run.sh          # launches GUI (default)
+java Main --cli   # terminal / CLI mode
 ```
 
 Or compile and run manually:
 
 ```bash
-javac chemistry/*.java calculators/*.java ui/*.java Main.java
-java Main
+javac chemistry/*.java calculators/*.java ui/*.java gui/*.java Main.java
+java Main          # GUI
+java Main --cli    # CLI
 ```
+
+## Interface
+
+The default interface is a **Swing GUI** with a dark sidebar for navigation and a tab-based layout for each calculator. Every panel has labelled input fields, a calculate button, and a dark terminal-style output area. Press **Enter** in any text field to trigger the calculation.
+
+The original **CLI** is still fully functional via `java Main --cli`.
 
 ## Features
 
@@ -83,6 +91,7 @@ Built-in tables you can look up during the exam:
 - Electrochemical series (standard reduction potentials E°)
 - Organic compound classes and functional groups
 - Carbon cycle and nitrogen cycle key reactions
+- Periodic table trends (atomic radius, IE, electronegativity, metallic character)
 
 ## Formula Input Format
 
@@ -98,21 +107,33 @@ Built-in tables you can look up during the exam:
 
 ```
 Program/
-├── Main.java                   Entry point
-├── run.sh                      Compile + run script
+├── Main.java                     Entry point (GUI default, --cli for terminal)
+├── run.sh                        Compile + run script
 ├── chemistry/
-│   ├── Element.java            Element data class
-│   ├── PeriodicTable.java      Singleton with all elements (H–Rn)
-│   └── FormulaParser.java      Formula parser (handles parentheses, charges)
-├── calculators/
-│   ├── Calculator.java         Interface
-│   ├── EquationBalancer.java   Gaussian elimination balancer
-│   ├── PHCalculator.java       pH and acid-base
-│   ├── RedoxCalculator.java    Oxidation states and redox
-│   ├── ThermodynamicsCalc.java ΔG, ΔH, ΔS, Hess, Clausius-Clapeyron
-│   ├── KineticsCalc.java       Arrhenius, rate laws, half-life
-│   ├── EquilibriumCalc.java    ICE tables, Kc, Kp, Ksp
-│   └── StoichiometryCalc.java  Moles, yield, ideal gas, empirical formula
+│   ├── Element.java              Element data class
+│   ├── PeriodicTable.java        Singleton with all elements (H–Rn)
+│   └── FormulaParser.java        Formula parser (handles parentheses, charges)
+├── calculators/                  Pure calculation logic (no UI dependency)
+│   ├── Calculator.java           Interface
+│   ├── EquationBalancer.java     Gaussian elimination balancer
+│   ├── PHCalculator.java         pH and acid-base
+│   ├── RedoxCalculator.java      Oxidation states and redox
+│   ├── ThermodynamicsCalc.java   ΔG, ΔH, ΔS, Hess, Clausius-Clapeyron
+│   ├── KineticsCalc.java         Arrhenius, rate laws, half-life
+│   ├── EquilibriumCalc.java      ICE tables, Kc, Kp, Ksp
+│   └── StoichiometryCalc.java    Moles, yield, ideal gas, empirical formula
+├── gui/                          Swing GUI (JFrame)
+│   ├── ChemApp.java              Main window — sidebar + CardLayout
+│   ├── BaseCalcPanel.java        Abstract base panel (input card + output area)
+│   ├── HomePanel.java            Welcome / feature overview screen
+│   ├── EquationBalancerPanel.java
+│   ├── PHPanel.java
+│   ├── RedoxPanel.java
+│   ├── ThermodynamicsPanel.java
+│   ├── KineticsPanel.java
+│   ├── EquilibriumPanel.java
+│   ├── StoichiometryPanel.java
+│   └── ReferencePanel.java       8 scrollable reference tables
 └── ui/
-    └── MenuSystem.java         Menu navigation
+    └── MenuSystem.java           CLI menu navigation
 ```
