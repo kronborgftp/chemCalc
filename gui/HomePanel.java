@@ -22,7 +22,7 @@ public class HomePanel extends JPanel {
         title.setForeground(new Color(20, 25, 50));
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel sub = new JLabel("All calculations you need — one program.");
+        JLabel sub = new JLabel("All calculations you need, for the exam.");
         sub.setFont(new Font("SansSerif", Font.ITALIC, 15));
         sub.setForeground(new Color(100, 105, 120));
         sub.setAlignmentX(Component.CENTER_ALIGNMENT);

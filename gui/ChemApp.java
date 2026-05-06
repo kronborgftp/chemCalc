@@ -6,7 +6,7 @@ import java.awt.*;
 public class ChemApp extends JFrame {
 
     private final CardLayout cards = new CardLayout();
-    private final JPanel     content = new JPanel(cards);
+    private final JPanel content = new JPanel(cards);
 
     public ChemApp() {
         super("DTU Chemistry Exam Toolkit  v1.0");
@@ -28,7 +28,7 @@ public class ChemApp extends JFrame {
         JLabel version = new JLabel("v1.0");
         version.setForeground(new Color(150, 170, 220));
         version.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        titleBar.add(title,   BorderLayout.WEST);
+        titleBar.add(title, BorderLayout.WEST);
         titleBar.add(version, BorderLayout.EAST);
         add(titleBar, BorderLayout.NORTH);
 
@@ -38,15 +38,15 @@ public class ChemApp extends JFrame {
 
         // ── Content panels ────────────────────────────────────────────────────
         content.setBackground(new Color(245, 246, 250));
-        content.add(new HomePanel(),             "home");
+        content.add(new HomePanel(), "home");
         content.add(new EquationBalancerPanel(), "eq");
-        content.add(new PHPanel(),               "ph");
-        content.add(new RedoxPanel(),            "redox");
-        content.add(new ThermodynamicsPanel(),   "thermo");
-        content.add(new KineticsPanel(),         "kinetics");
-        content.add(new EquilibriumPanel(),      "equil");
-        content.add(new StoichiometryPanel(),    "stoich");
-        content.add(new ReferencePanel(),        "ref");
+        content.add(new PHPanel(), "ph");
+        content.add(new RedoxPanel(), "redox");
+        content.add(new ThermodynamicsPanel(), "thermo");
+        content.add(new KineticsPanel(), "kinetics");
+        content.add(new EquilibriumPanel(), "equil");
+        content.add(new StoichiometryPanel(), "stoich");
+        content.add(new ReferencePanel(), "ref");
         add(content, BorderLayout.CENTER);
 
         setVisible(true);
@@ -60,15 +60,15 @@ public class ChemApp extends JFrame {
         sidebar.setBorder(BorderFactory.createEmptyBorder(12, 8, 12, 8));
 
         String[][] items = {
-            {"🏠  Home",               "home"},
-            {"⚖   Equation Balancer",  "eq"},
-            {"🧪  pH / Acid-Base",      "ph"},
-            {"⚡  Redox",              "redox"},
-            {"🌡   Thermodynamics",     "thermo"},
-            {"⏱   Kinetics",           "kinetics"},
-            {"⚖   Equilibrium",        "equil"},
-            {"🔬  Stoichiometry",       "stoich"},
-            {"📋  Reference Tables",   "ref"},
+                { "Home", "home" },
+                { "Equation Balancer", "eq" },
+                { "pH / Acid-Base", "ph" },
+                { "Redox", "redox" },
+                { "Thermodynamics", "thermo" },
+                { "Kinetics", "kinetics" },
+                { "Equilibrium", "equil" },
+                { "Stoichiometry", "stoich" },
+                { "Reference Tables", "ref" }
         };
 
         for (String[] item : items) {
@@ -98,6 +98,7 @@ public class ChemApp extends JFrame {
                 btn.setBackground(new Color(37, 99, 200));
                 btn.setForeground(Color.WHITE);
             }
+
             public void mouseExited(java.awt.event.MouseEvent e) {
                 btn.setBackground(new Color(36, 41, 60));
                 btn.setForeground(new Color(210, 215, 230));
