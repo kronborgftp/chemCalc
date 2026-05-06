@@ -129,11 +129,12 @@ public class EquationBalancer implements Calculator {
         if (freeVars.isEmpty())
             return "Cannot balance: equation is over-determined or trivially balanced";
 
-        // ── 5. Set free variable = 1, solve for pivots ───────────────────────
-        int freeVar = freeVars.get(0);
+        // ── 5. Set ALL free variables = 1, solve for pivots ──────────────────
+        // Setting all free vars to 1 avoids zero-coefficient compounds that
+        // occur when only one free variable is set in an underdetermined system.
         Frac[] sol = new Frac[n];
         for (int j = 0; j < n; j++) sol[j] = Frac.ZERO;
-        sol[freeVar] = Frac.ONE;
+        for (int fv : freeVars) sol[fv] = Frac.ONE;
 
         for (int r = rank - 1; r >= 0; r--) {
             int pc = pivotCol[r];
@@ -163,16 +164,22 @@ public class EquationBalancer implements Calculator {
 
         // ── 7. Format output ─────────────────────────────────────────────────
         StringBuilder sb = new StringBuilder();
+        boolean firstR = true;
         for (int j = 0; j < reactantCount; j++) {
-            if (j > 0) sb.append(" + ");
+            if (coeffs[j] == 0) continue;
+            if (!firstR) sb.append(" + ");
             if (coeffs[j] != 1) sb.append(coeffs[j]);
             sb.append(compounds.get(j));
+            firstR = false;
         }
         sb.append("  ->  ");
+        boolean firstP = true;
         for (int j = reactantCount; j < n; j++) {
-            if (j > reactantCount) sb.append(" + ");
+            if (coeffs[j] == 0) continue;
+            if (!firstP) sb.append(" + ");
             if (coeffs[j] != 1) sb.append(coeffs[j]);
             sb.append(compounds.get(j));
+            firstP = false;
         }
 
         // Verify (optional sanity check)

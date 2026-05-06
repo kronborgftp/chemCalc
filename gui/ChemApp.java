@@ -42,6 +42,7 @@ public class ChemApp extends JFrame {
         content.add(new EquationBalancerPanel(), "eq");
         content.add(new PHPanel(), "ph");
         content.add(new RedoxPanel(), "redox");
+        content.add(new ElectrochemistryPanel(), "electro");
         content.add(new ThermodynamicsPanel(), "thermo");
         content.add(new KineticsPanel(), "kinetics");
         content.add(new EquilibriumPanel(), "equil");
@@ -64,6 +65,7 @@ public class ChemApp extends JFrame {
                 { "Equation Balancer", "eq" },
                 { "pH / Acid-Base", "ph" },
                 { "Redox", "redox" },
+                { "Electrochemistry", "electro" },
                 { "Thermodynamics", "thermo" },
                 { "Kinetics", "kinetics" },
                 { "Equilibrium", "equil" },

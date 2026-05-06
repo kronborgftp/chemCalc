@@ -25,6 +25,7 @@ public class EquilibriumPanel extends BaseCalcPanel {
         tabs.addTab("Kp ↔ Kc",          kpKcTab());
         tabs.addTab("Q vs K direction",  qTab());
         tabs.addTab("Ksp ↔ solubility",  kspTab());
+        tabs.addTab("Osmosis",           osmosisTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -255,6 +256,84 @@ public class EquilibriumPanel extends BaseCalcPanel {
                 double Ksp = pre * Math.pow(val, exp);
                 output(String.format("Molar Solubility → Ksp\n──────────────────────\n" +
                     "Ksp = m^m · n^n · s^(m+n)\nKsp = %.6e", Ksp));
+            }
+        });
+        return p;
+    }
+
+    // ── Osmosis ───────────────────────────────────────────────────────────────
+
+    private JPanel osmosisTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("π = i·c·R·T  &nbsp;  R = 0.08206 L·atm/(mol·K)  &nbsp; i = van't Hoff factor"), g);
+        g.gridwidth = 1;
+
+        String[] modes = {"π → c  (find concentration)", "c → π  (find osmotic pressure)",
+                          "Molar mass from osmometry"};
+        JComboBox<String> mode = new JComboBox<>(modes);
+        g.gridy = 1; g.gridwidth = 2;
+        p.add(mode, g);
+        g.gridwidth = 1;
+
+        JTextField iF  = addRow(p, g, 2, "i (van't Hoff factor, 1 = non-electrolyte):");
+        JTextField tF  = addRow(p, g, 3, "T (K):");
+        JTextField piF = addRow(p, g, 4, "π osmotic pressure (atm)  [blank if solving]:");
+        JTextField cF  = addRow(p, g, 5, "c concentration (mol/L)  [blank if solving]:");
+        JTextField massF = addRow(p, g, 6, "Solute mass (g)  [only for molar mass mode]:");
+        JTextField volF  = addRow(p, g, 7, "Solution volume (L)  [only for molar mass mode]:");
+        iF.setText("1");
+        tF.setText("298.15");
+
+        g.gridy = 8; g.gridx = 0; g.gridwidth = 2;
+        p.add(hint("i = 1 (glucose), i = 2 (NaCl), i = 3 (CaCl₂, MgSO₄), i = 4 (AlCl₃)"), g);
+        g.gridwidth = 1;
+
+        calcBtn(p, g, 9, "Calculate", () -> {
+            double iVal = parse(iF);
+            double T    = parse(tF);
+            double R    = R_ATM;
+            switch (mode.getSelectedIndex()) {
+                case 0 -> {
+                    double pi = parse(piF);
+                    double c  = pi / (iVal * R * T);
+                    output(String.format(
+                        "Osmosis: π = i·c·R·T  →  find c\n" +
+                        "──────────────────────────────────\n" +
+                        "π   = %.4f atm\ni   = %.2f\nT   = %.2f K\n\n" +
+                        "c = π / (i·R·T) = %.4f / (%.2f × %.5f × %.2f)\n" +
+                        "c = %.6f mol/L",
+                        pi, iVal, T, pi, iVal, R, T, c));
+                }
+                case 1 -> {
+                    double c  = parse(cF);
+                    double pi = iVal * c * R * T;
+                    output(String.format(
+                        "Osmosis: π = i·c·R·T  →  find π\n" +
+                        "──────────────────────────────────\n" +
+                        "c   = %.4f mol/L\ni   = %.2f\nT   = %.2f K\n\n" +
+                        "π = i·c·R·T = %.2f × %.4f × %.5f × %.2f\n" +
+                        "π = %.4f atm  (= %.2f kPa)",
+                        c, iVal, T, iVal, c, R, T, pi, pi * 101.325));
+                }
+                case 2 -> {
+                    double pi   = parse(piF);
+                    double mass = parse(massF);
+                    double vol  = parse(volF);
+                    double c    = pi / (iVal * R * T);
+                    double M    = mass / (c * vol);
+                    output(String.format(
+                        "Osmometry: molar mass from π\n" +
+                        "──────────────────────────────────\n" +
+                        "π       = %.4f atm\ni       = %.2f\nT       = %.2f K\n" +
+                        "mass    = %.4f g\nvolume  = %.4f L\n\n" +
+                        "c = π/(i·R·T) = %.6f mol/L\n" +
+                        "M = mass/(c·V) = %.4f / (%.6f × %.4f)\n" +
+                        "M = %.2f g/mol",
+                        pi, iVal, T, mass, vol, c, mass, c, vol, M));
+                }
             }
         });
         return p;
