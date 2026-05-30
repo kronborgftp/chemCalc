@@ -17,6 +17,7 @@ public class VESPRPanel extends BaseCalcPanel {
         inputPanel.setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(TAB_FONT);
+        mainTabs = tabs;
         tabs.addTab("From Formula", formulaTab());
         tabs.addTab("Manual",       manualTab());
         tabs.addTab("Reference",    referenceTab());

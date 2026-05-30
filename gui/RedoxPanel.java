@@ -18,6 +18,7 @@ public class RedoxPanel extends BaseCalcPanel {
         inputPanel.setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(TAB_FONT);
+        mainTabs = tabs;
         tabs.addTab("Oxidation States",         oxStatesTab());
         tabs.addTab("Balance Half-Rxn (Acid)",  halfRxnTab(false));
         tabs.addTab("Balance Half-Rxn (Basic)", halfRxnTab(true));

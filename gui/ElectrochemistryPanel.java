@@ -17,6 +17,7 @@ public class ElectrochemistryPanel extends BaseCalcPanel {
         inputPanel.setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(TAB_FONT);
+        mainTabs = tabs;
         tabs.addTab("E°cell",          ecellTab());
         tabs.addTab("Nernst Equation", nernstTab());
         tabs.addTab("ΔG° / K / E°",   triangleTab());

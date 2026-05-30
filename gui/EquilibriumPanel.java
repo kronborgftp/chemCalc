@@ -18,6 +18,7 @@ public class EquilibriumPanel extends BaseCalcPanel {
         inputPanel.setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(TAB_FONT);
+        mainTabs = tabs;
         tabs.addTab("ICE — Weak Acid",   iceAcidTab());
         tabs.addTab("ICE — Weak Base",   iceBaseTab());
         tabs.addTab("ICE — General",     iceGenTab());
@@ -25,7 +26,8 @@ public class EquilibriumPanel extends BaseCalcPanel {
         tabs.addTab("Kp ↔ Kc",          kpKcTab());
         tabs.addTab("Q vs K direction",  qTab());
         tabs.addTab("Ksp ↔ solubility",  kspTab());
-        tabs.addTab("Osmosis",           osmosisTab());
+        tabs.addTab("Osmosis",                osmosisTab());
+        tabs.addTab("Selective Precip.",      selectivePrecipTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -335,6 +337,62 @@ public class EquilibriumPanel extends BaseCalcPanel {
                         pi, iVal, T, mass, vol, c, mass, c, vol, M));
                 }
             }
+        });
+        return p;
+    }
+
+    // ── Selective precipitation ───────────────────────────────────────────────
+
+    private JPanel selectivePrecipTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("Precipitates when [M] exceeds threshold: [M]_thresh = (Ksp / [anion]^n)^(1/m)  " +
+                   "— salt with LOWER threshold precipitates FIRST (needs less metal ion to start precipitating)"), g);
+        g.gridwidth = 1;
+
+        g.gridx = 0; g.gridy = 1; g.gridwidth = 2; p.add(lbl("─── Salt 1 ───"), g); g.gridwidth = 1;
+        JTextField name1F = addRow(p, g, 2,  "Salt 1 name (e.g. AgCl):");
+        JTextField ksp1F  = addRow(p, g, 3,  "Ksp (salt 1):");
+        JTextField m1F    = addRow(p, g, 4,  "m — stoich. coeff. of metal ion (e.g. 1 for AgCl, 1 for PbCl₂):");
+        JTextField n1F    = addRow(p, g, 5,  "n — stoich. coeff. of shared anion (e.g. 1 for AgCl, 2 for PbCl₂):");
+        m1F.setText("1"); n1F.setText("1");
+
+        g.gridx = 0; g.gridy = 6; g.gridwidth = 2; p.add(lbl("─── Salt 2 ───"), g); g.gridwidth = 1;
+        JTextField name2F = addRow(p, g, 7,  "Salt 2 name:");
+        JTextField ksp2F  = addRow(p, g, 8,  "Ksp (salt 2):");
+        JTextField m2F    = addRow(p, g, 9,  "m — stoich. coeff. of metal ion:");
+        JTextField n2F    = addRow(p, g, 10, "n — stoich. coeff. of shared anion:");
+        m2F.setText("1"); n2F.setText("2");
+
+        g.gridx = 0; g.gridy = 11; g.gridwidth = 2; p.add(lbl("─── Shared anion ───"), g); g.gridwidth = 1;
+        JTextField anionF = addRow(p, g, 12, "[shared anion] (mol/L):");
+
+        calcBtn(p, g, 13, "Compare", () -> {
+            double Ksp1 = parse(ksp1F), m1 = parse(m1F), n1 = parse(n1F);
+            double Ksp2 = parse(ksp2F), m2 = parse(m2F), n2 = parse(n2F);
+            double anion = parse(anionF);
+            String s1 = name1F.getText().trim().isEmpty() ? "Salt 1" : name1F.getText().trim();
+            String s2 = name2F.getText().trim().isEmpty() ? "Salt 2" : name2F.getText().trim();
+
+            // MₘXₙ: Ksp = [M]^m·[X]^n  →  [M]_thresh = (Ksp / [X]^n)^(1/m)
+            double thresh1 = Math.pow(Ksp1 / Math.pow(anion, n1), 1.0 / m1);
+            double thresh2 = Math.pow(Ksp2 / Math.pow(anion, n2), 1.0 / m2);
+
+            String first;
+            if (thresh1 < thresh2) first = s1 + " (lower [metal] needed to start precipitating)";
+            else if (thresh2 < thresh1) first = s2 + " (lower [metal] needed to start precipitating)";
+            else first = "Both simultaneously";
+
+            output(String.format(
+                "Selective Precipitation\n" +
+                "──────────────────────────────────────────────────\n" +
+                "[Shared anion] = %.4e mol/L\n\n" +
+                "%-12s precipitates when [metal ion] > %.4e mol/L\n" +
+                "%-12s precipitates when [metal ion] > %.4e mol/L\n\n" +
+                "→ %s precipitates FIRST",
+                anion, s1, thresh1, s2, thresh2, first));
         });
         return p;
     }

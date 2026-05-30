@@ -18,12 +18,14 @@ public class PHPanel extends BaseCalcPanel {
         inputPanel.setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(TAB_FONT);
+        mainTabs = tabs;
         tabs.addTab("Strong Acid",     strongAcidTab());
         tabs.addTab("Strong Base",     strongBaseTab());
         tabs.addTab("Weak Acid",       weakAcidTab());
         tabs.addTab("Weak Base",       weakBaseTab());
         tabs.addTab("Buffer",          bufferTab());
-        tabs.addTab("Neutralisation",  neutralTab());
+        tabs.addTab("Neutralisation",   neutralTab());
+        tabs.addTab("Buffer + Titrant", bufferTitrantTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -176,6 +178,78 @@ public class PHPanel extends BaseCalcPanel {
                 "Acid-Base Neutralisation\n─────────────────────────\n" +
                 "mol H⁺  = %.4f\nmol OH⁻ = %.4f\n%s\npH = %.4f",
                 molA, molB, status, pH));
+        });
+        return p;
+    }
+
+    // ── Buffer + Titrant ──────────────────────────────────────────────────────
+
+    private JPanel bufferTitrantTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("Strong base: HA + OH⁻ → A⁻ + H₂O  |  Strong acid: A⁻ + H⁺ → HA  |  Uses mol ratios — volumes cancel"), g);
+        g.gridwidth = 1;
+
+        String[] kModes = {"Ka of weak acid (direct)", "Kb of weak base (Ka = Kw/Kb)"};
+        JComboBox<String> kMode = new JComboBox<>(kModes);
+        g.gridy = 1; g.gridwidth = 2; p.add(kMode, g); g.gridwidth = 1;
+
+        JTextField kF     = addRow(p, g, 2, "Ka  (or Kb if mode above is Kb):");
+        JTextField molHAF = addRow(p, g, 3, "Initial mol HA  (weak acid / or weak base if Kb):");
+        JTextField molAF  = addRow(p, g, 4, "Initial mol A⁻  (conjugate base / or conj. acid):");
+
+        String[] titTypes = {"Strong Base (OH⁻ added)", "Strong Acid (H⁺ added)"};
+        JComboBox<String> titType = new JComboBox<>(titTypes);
+        g.gridy = 5; g.gridwidth = 2; p.add(titType, g); g.gridwidth = 1;
+
+        JTextField titVolF  = addRow(p, g, 6, "Titrant volume (mL):");
+        JTextField titConcF = addRow(p, g, 7, "Titrant concentration (mol/L):");
+
+        inputPanel(g, p, 8, () -> {
+            double K  = parse(kF);
+            double Ka = (kMode.getSelectedIndex() == 1) ? 1e-14 / K : K;
+            double molHA  = parse(molHAF);
+            double molA   = parse(molAF);
+            double molTit = parse(titVolF) / 1000.0 * parse(titConcF);
+
+            double newMolHA, newMolA;
+            String titDesc;
+            if (titType.getSelectedIndex() == 0) {
+                newMolHA = molHA - molTit;  newMolA = molA + molTit;
+                titDesc  = "Strong base";
+            } else {
+                newMolHA = molHA + molTit;  newMolA = molA - molTit;
+                titDesc  = "Strong acid";
+            }
+
+            if (newMolHA <= 0 || newMolA <= 0) {
+                output(String.format(
+                    "Buffer capacity exceeded!\n" +
+                    "mol HA after = %.4f   mol A⁻ after = %.4f\n" +
+                    "One component is fully consumed — buffer no longer holds.",
+                    newMolHA, newMolA));
+                return;
+            }
+
+            double pKa   = -Math.log10(Ka);
+            double ratio = newMolA / newMolHA;
+            double pH    = pKa + Math.log10(ratio);
+            output(String.format(
+                "Buffer + Titrant  (Henderson-Hasselbalch)\n" +
+                "─────────────────────────────────────────────\n" +
+                "%s added:   %.4f mol\n\n" +
+                "Before:  mol HA = %.4f   mol A⁻ = %.4f\n" +
+                "After:   mol HA = %.4f   mol A⁻ = %.4f\n" +
+                "         [A⁻]/[HA] = %.4f\n\n" +
+                "pKa = %.4f\n" +
+                "pH  = pKa + log([A⁻]/[HA])\n" +
+                "    = %.4f + (%.4f)\n" +
+                "    = %.4f",
+                titDesc, molTit, molHA, molA,
+                newMolHA, newMolA, ratio,
+                pKa, pKa, Math.log10(ratio), pH));
         });
         return p;
     }

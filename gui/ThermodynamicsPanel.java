@@ -16,6 +16,7 @@ public class ThermodynamicsPanel extends BaseCalcPanel {
         inputPanel.setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(TAB_FONT);
+        mainTabs = tabs;
         tabs.addTab("ΔG = ΔH − TΔS",  gibbsTab());
         tabs.addTab("ΔG° ↔ K",        gibbsKTab());
         tabs.addTab("Non-std ΔG",      nonStdTab());

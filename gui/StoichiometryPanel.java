@@ -19,6 +19,7 @@ public class StoichiometryPanel extends BaseCalcPanel {
         inputPanel.setLayout(new BorderLayout());
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(TAB_FONT);
+        mainTabs = tabs;
         tabs.addTab("Molar Mass",       molarMassTab());
         tabs.addTab("Moles ↔ Mass",     molesMassTab());
         tabs.addTab("Ideal Gas",        idealGasTab());
@@ -29,6 +30,8 @@ public class StoichiometryPanel extends BaseCalcPanel {
         tabs.addTab("Colligative",      colligativeTab());
         tabs.addTab("Isotope",          isotopeTab());
         tabs.addTab("Electron Config",  electronConfigTab());
+        tabs.addTab("Photon Energy",    photonEnergyTab());
+        tabs.addTab("Unit Cell",        crystalUnitCellTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -478,6 +481,152 @@ public class StoichiometryPanel extends BaseCalcPanel {
             output(String.format("Electron Configuration Analysis\n──────────────────────────────\n" +
                     "Period = %d\nGroup  = %d  (%s-block)\nGroup name: %s\nElement: %s",
                     period, group, block, groupName, element));
+        });
+        return p;
+    }
+
+    // ── Photon Energy ─────────────────────────────────────────────────────────
+
+    private JPanel photonEnergyTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("E = hc/λ  |  h = 6.626×10⁻³⁴ J·s  |  c = 2.998×10⁸ m/s  |  NA = 6.022×10²³"), g);
+        g.gridwidth = 1;
+
+        String[] modes = {"λ (nm)  →  energy per photon & per mole",
+                          "Energy (kJ/mol)  →  λ (nm)",
+                          "Frequency ν (Hz)  →  energy"};
+        JComboBox<String> mode = new JComboBox<>(modes);
+        g.gridy = 1; g.gridwidth = 2; p.add(mode, g); g.gridwidth = 1;
+
+        JTextField lamF  = addRow(p, g, 2, "Wavelength λ (nm):");
+        JTextField eF    = addRow(p, g, 3, "Energy (kJ/mol)  [blank if solving for E]:");
+        JTextField freqF = addRow(p, g, 4, "Frequency ν (Hz)  [for frequency mode]:");
+
+        final double h  = 6.626e-34;
+        final double c  = 2.998e8;
+        final double NA = 6.022e23;
+
+        calcBtn(p, g, 5, "Calculate", () -> {
+            switch (mode.getSelectedIndex()) {
+                case 0 -> {
+                    double lambda   = parse(lamF) * 1e-9;
+                    double ePhoton  = h * c / lambda;
+                    double eMol     = ePhoton * NA;
+                    output(String.format(
+                        "Photon Energy from Wavelength\n──────────────────────────────\n" +
+                        "λ           = %.2f nm  (%.4e m)\n\n" +
+                        "E (photon)  = hc/λ = %.4e J\n" +
+                        "E (per mol) = E × NA = %.4f kJ/mol\n" +
+                        "ν = c/λ     = %.4e Hz",
+                        parse(lamF), lambda, ePhoton, eMol / 1000, c / lambda));
+                }
+                case 1 -> {
+                    double eMol    = parse(eF) * 1000;
+                    double ePhoton = eMol / NA;
+                    double lambda  = h * c / ePhoton;
+                    output(String.format(
+                        "Wavelength from Energy\n──────────────────────────────\n" +
+                        "E           = %.4f kJ/mol  (%.4e J/photon)\n\n" +
+                        "λ = hc/E    = %.2f nm\n" +
+                        "ν = c/λ     = %.4e Hz",
+                        parse(eF), ePhoton, lambda / 1e-9, c / lambda));
+                }
+                case 2 -> {
+                    double freq    = parse(freqF);
+                    double ePhoton = h * freq;
+                    double eMol    = ePhoton * NA;
+                    double lambda  = c / freq;
+                    output(String.format(
+                        "Energy from Frequency\n──────────────────────────────\n" +
+                        "ν           = %.4e Hz\n\n" +
+                        "E (photon)  = hν = %.4e J\n" +
+                        "E (per mol) = %.4f kJ/mol\n" +
+                        "λ = c/ν     = %.2f nm",
+                        freq, ePhoton, eMol / 1000, lambda / 1e-9));
+                }
+            }
+        });
+        return p;
+    }
+
+    // ── Crystal Unit Cell ─────────────────────────────────────────────────────
+
+    private JPanel crystalUnitCellTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("ρ = Z·M / (NA·a³)  |  sc: Z=1  bcc: Z=2  fcc: Z=4  |  a in pm, ρ in g/cm³"), g);
+        g.gridwidth = 1;
+
+        String[] structures = {"bcc  (body-centred cubic, Z = 2)",
+                               "fcc  (face-centred cubic,  Z = 4)",
+                               "sc   (simple cubic,        Z = 1)"};
+        JComboBox<String> structCB = new JComboBox<>(structures);
+        g.gridy = 1; g.gridwidth = 2; p.add(structCB, g); g.gridwidth = 1;
+
+        String[] modes = {"ρ  →  lattice parameter a",
+                          "a  →  density ρ",
+                          "# unit cells in area × thickness"};
+        JComboBox<String> mode = new JComboBox<>(modes);
+        g.gridy = 2; g.gridwidth = 2; p.add(mode, g); g.gridwidth = 1;
+
+        JTextField mF    = addRow(p, g, 3, "Molar mass M (g/mol):");
+        JTextField rhoF  = addRow(p, g, 4, "Density ρ (g/cm³)  [blank if solving for ρ]:");
+        JTextField aF    = addRow(p, g, 5, "Lattice parameter a (pm)  [blank if solving for a]:");
+        JTextField areaF = addRow(p, g, 6, "Area (cm²)  [for unit cell count]:");
+        JTextField thkF  = addRow(p, g, 7, "Thickness (µm)  [for unit cell count]:");
+
+        final double NA = 6.022e23;
+
+        calcBtn(p, g, 8, "Calculate", () -> {
+            int Z = switch (structCB.getSelectedIndex()) { case 0 -> 2; case 1 -> 4; default -> 1; };
+            String struct = (String) structCB.getSelectedItem();
+            double M = parse(mF);
+
+            switch (mode.getSelectedIndex()) {
+                case 0 -> {
+                    double rho = parse(rhoF);
+                    double a3  = Z * M / (NA * rho);       // cm³
+                    double a   = Math.pow(a3, 1.0 / 3);    // cm
+                    double aPm = a * 1e10;                  // cm → pm
+                    output(String.format(
+                        "Lattice Parameter from Density\n──────────────────────────────\n" +
+                        "Structure: %s   Z = %d\nM = %.4f g/mol   ρ = %.4f g/cm³\n\n" +
+                        "a³ = Z·M / (NA·ρ) = %.4e cm³\na  = %.4e cm  =  %.2f pm",
+                        struct, Z, M, rho, a3, a, aPm));
+                }
+                case 1 -> {
+                    double aCm = parse(aF) * 1e-10;         // pm → cm
+                    double rho = Z * M / (NA * Math.pow(aCm, 3));
+                    output(String.format(
+                        "Density from Lattice Parameter\n──────────────────────────────\n" +
+                        "Structure: %s   Z = %d\nM = %.4f g/mol   a = %.2f pm\n\n" +
+                        "ρ = Z·M / (NA·a³) = %.4f g/cm³",
+                        struct, Z, M, parse(aF), rho));
+                }
+                case 2 -> {
+                    double rho    = parse(rhoF);
+                    double a3     = Z * M / (NA * rho);
+                    double a      = Math.pow(a3, 1.0 / 3);
+                    double area   = parse(areaF);
+                    double thkCm  = parse(thkF) * 1e-4;    // µm → cm
+                    double vol    = area * thkCm;
+                    double nCells = vol / a3;
+                    output(String.format(
+                        "Unit Cells in Volume\n──────────────────────────────\n" +
+                        "Structure: %s   Z = %d\nM = %.4f g/mol   ρ = %.4f g/cm³\n\n" +
+                        "a = %.2f pm   a³ = %.4e cm³\n" +
+                        "Area = %.4f cm²   Thickness = %.2f µm = %.4e cm\n" +
+                        "Volume = %.4e cm³\n\n" +
+                        "N = V / a³ = %.4e / %.4e\n  = %.4e unit cells",
+                        struct, Z, M, rho, a * 1e10, a3,
+                        area, parse(thkF), thkCm, vol, vol, a3, nCells));
+                }
+            }
         });
         return p;
     }

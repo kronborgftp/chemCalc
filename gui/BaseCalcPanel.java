@@ -10,8 +10,9 @@ import java.awt.*;
  */
 public abstract class BaseCalcPanel extends JPanel {
 
-    protected JTextArea outputArea;
-    protected JPanel    inputPanel;
+    protected JTextArea    outputArea;
+    protected JPanel       inputPanel;
+    protected JTabbedPane  mainTabs;
 
     // ── Shared palette ────────────────────────────────────────────────────────
     protected static final Color BG         = new Color(245, 246, 250);
@@ -177,6 +178,11 @@ public abstract class BaseCalcPanel extends JPanel {
         return BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(215, 218, 228), 1, true),
                 BorderFactory.createEmptyBorder(16, 16, 16, 16));
+    }
+
+    public void goToTab(int index) {
+        if (mainTabs != null && index >= 0 && index < mainTabs.getTabCount())
+            mainTabs.setSelectedIndex(index);
     }
 
     protected void output(String text) {
