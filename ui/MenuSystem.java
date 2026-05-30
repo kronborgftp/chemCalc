@@ -16,6 +16,7 @@ public class MenuSystem {
     private KineticsCalc      kineticsCalc;
     private EquilibriumCalc   equilibriumCalc;
     private StoichiometryCalc stoichiometryCalc;
+    private VESPRCalc         vesprCalc;
 
     public void start() {
         clearScreen();
@@ -57,7 +58,11 @@ public class MenuSystem {
                     if (stoichiometryCalc == null) stoichiometryCalc = new StoichiometryCalc();
                     stoichiometryCalc.run(sc);
                 }
-                case "8" -> showReference();
+                case "8" -> {
+                    if (vesprCalc == null) vesprCalc = new VESPRCalc();
+                    vesprCalc.run(sc);
+                }
+                case "9" -> showReference();
                 case "0" -> {
                     System.out.println("Good luck on your exam!");
                     running = false;
@@ -79,7 +84,8 @@ public class MenuSystem {
         System.out.println("│  5. Kinetics                   (Arrhenius, rate laws)│");
         System.out.println("│  6. Equilibrium                (ICE table, Kc, Kp)  │");
         System.out.println("│  7. Stoichiometry              (moles, yield, gas)   │");
-        System.out.println("│  8. Reference Tables                                 │");
+        System.out.println("│  8. VSEPR / Molecular Geometry (shapes, angles)      │");
+        System.out.println("│  9. Reference Tables                                 │");
         System.out.println("│  0. Exit                                             │");
         System.out.println("└──────────────────────────────────────────────────────┘");
         System.out.print("Choice: ");

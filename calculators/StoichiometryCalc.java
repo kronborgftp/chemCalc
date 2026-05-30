@@ -30,21 +30,25 @@ public class StoichiometryCalc implements Calculator {
             System.out.println("  7. Molecular formula from empirical formula + molar mass");
             System.out.println("  8. Periodic table lookup");
             System.out.println("  9. Colligative properties  (ΔTb, ΔTf, osmotic pressure, molar mass)");
+            System.out.println("  10. Isotope calculator  (protons, neutrons, electrons)");
+            System.out.println("  11. Electron configuration → group & period");
             System.out.println("  0. Back");
             System.out.print("Choice: ");
             String ch = sc.nextLine().trim();
             switch (ch) {
-                case "1" -> molarMass(sc);
-                case "2" -> molesMass(sc);
-                case "3" -> idealGas(sc);
-                case "4" -> limitingReagent(sc);
-                case "5" -> percentYield(sc);
-                case "6" -> empiricalFormula(sc);
-                case "7" -> molecularFormula(sc);
-                case "8" -> periodicLookup(sc);
-                case "9" -> colligative(sc);
-                case "0" -> running = false;
-                default  -> System.out.println("  Invalid choice.");
+                case "1"  -> molarMass(sc);
+                case "2"  -> molesMass(sc);
+                case "3"  -> idealGas(sc);
+                case "4"  -> limitingReagent(sc);
+                case "5"  -> percentYield(sc);
+                case "6"  -> empiricalFormula(sc);
+                case "7"  -> molecularFormula(sc);
+                case "8"  -> periodicLookup(sc);
+                case "9"  -> colligative(sc);
+                case "10" -> isotopeCalc(sc);
+                case "11" -> electronConfig(sc);
+                case "0"  -> running = false;
+                default   -> System.out.println("  Invalid choice.");
             }
         }
     }
@@ -336,6 +340,120 @@ public class StoichiometryCalc implements Calculator {
         double i       = PHCalculator.readDouble(sc, "van't Hoff factor i (1 for non-electrolyte): ");
         double molarM  = (i * K * massSol) / (dT * kgSolv);
         System.out.printf("%n  Molar mass = %.4f g/mol%n", molarM);
+    }
+
+    // ── 10. Isotope calculator ────────────────────────────────────────────────
+
+    private void isotopeCalc(Scanner sc) {
+        System.out.println("\n-- Isotope Calculator --");
+        System.out.println("  Given element symbol + mass number A:");
+        System.out.println("  Protons (Z) = atomic number");
+        System.out.println("  Neutrons (N) = A - Z");
+        System.out.println("  Electrons = Z (neutral atom)  or  Z - charge (ion)");
+        System.out.println();
+        System.out.println("  Enter 1-3 isotopes (press Enter with blank symbol to finish early).");
+        PeriodicTable pt = PeriodicTable.getInstance();
+        for (int i = 1; i <= 3; i++) {
+            System.out.printf("  Isotope %d symbol (or blank to stop): ", i);
+            String sym = sc.nextLine().trim();
+            if (sym.isEmpty()) break;
+            chemistry.Element el = pt.get(sym);
+            if (el == null) { System.out.println("  Element not found: " + sym); i--; continue; }
+            int A = (int) PHCalculator.readDouble(sc, "  Mass number A: ");
+            System.out.print("  Ion charge (0 for neutral): ");
+            String cStr = sc.nextLine().trim();
+            int ionCharge = cStr.isEmpty() ? 0 : Integer.parseInt(cStr);
+            int Z = el.atomicNumber;
+            int N = A - Z;
+            int electrons = Z - ionCharge;
+            System.out.printf("  %s-%d:  Z(protons)=%d  N(neutrons)=%d  electrons=%d%n",
+                    sym, A, Z, N, electrons);
+        }
+        // If multiple entered, compare neutron counts
+        System.out.println("\n  Tip: isotopes = same Z, different N");
+        System.out.println("       isotones = same N, different Z");
+        System.out.println("       isobars  = same A, different Z");
+    }
+
+    // ── 11. Electron configuration → group & period ───────────────────────────
+
+    private void electronConfig(Scanner sc) {
+        System.out.println("\n-- Electron Configuration → Group & Period --");
+        System.out.println("  Enter the outermost subshell electrons, e.g.:");
+        System.out.println("    3s2 3p5  →  Period 3, Group 17");
+        System.out.println("    4s2 4p5  →  Period 4, Group 17");
+        System.out.println("    2s2 2p3  →  Period 2, Group 15");
+        System.out.println("  Rules: period = highest principal quantum number n");
+        System.out.println("         group  = s+p electrons in outermost shell");
+        System.out.println("                  (1-2 for s-block, 13-18 for p-block, 3-12 for d-block)");
+        System.out.println();
+        System.out.print("  Outermost shell config (e.g. '4s2 4p5'): ");
+        String config = sc.nextLine().trim().toLowerCase();
+
+        // Parse tokens like "4s2", "4p5", "3d10", "4s1"
+        String[] tokens = config.split("\\s+");
+        int period = 0;
+        int sElec = 0, pElec = 0, dElec = 0;
+        int sPeriod = 0, pPeriod = 0;
+
+        for (String tok : tokens) {
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile("(\\d)(s|p|d|f)(\\d+)").matcher(tok);
+            if (!m.matches()) { System.out.println("  Could not parse token: " + tok); continue; }
+            int n    = Integer.parseInt(m.group(1));
+            String l = m.group(2);
+            int e    = Integer.parseInt(m.group(3));
+            if (n > period) period = n;
+            switch (l) {
+                case "s" -> { sElec = e; sPeriod = n; }
+                case "p" -> { pElec = e; pPeriod = n; }
+                case "d" -> dElec = e;
+            }
+        }
+
+        if (period == 0) { System.out.println("  No valid subshells found."); return; }
+
+        int group;
+        String block;
+        if (pElec > 0 && pPeriod == period) {
+            group = 10 + sElec + pElec; // p-block: groups 13-18
+            block = "p";
+        } else if (sElec > 0 && dElec == 0) {
+            group = sElec;              // s-block: groups 1-2
+            block = "s";
+        } else if (dElec > 0) {
+            group = sElec + dElec;      // d-block: groups 3-12
+            block = "d";
+        } else {
+            group = sElec;
+            block = "s";
+        }
+
+        System.out.printf("%n  Period = %d%n", period);
+        System.out.printf("  Group  = %d  (%s-block)%n", group, block);
+
+        // Name the group
+        String groupName = switch (group) {
+            case 1  -> "alkali metals (or hydrogen)";
+            case 2  -> "alkaline earth metals";
+            case 13 -> "boron group";
+            case 14 -> "carbon group";
+            case 15 -> "nitrogen group (pnictogens)";
+            case 16 -> "oxygen group (chalcogens)";
+            case 17 -> "halogens";
+            case 18 -> "noble gases";
+            default -> "transition metals";
+        };
+        System.out.println("  Group name: " + groupName);
+
+        // Try to identify the element
+        PeriodicTable pt = PeriodicTable.getInstance();
+        for (chemistry.Element el : pt.getAll()) {
+            if (el.period == period && el.group == group) {
+                System.out.println("  Element: " + el.symbol + " (" + el.name + ")");
+                break;
+            }
+        }
     }
 
     // ── 8. Periodic table lookup ──────────────────────────────────────────────

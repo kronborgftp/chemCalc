@@ -24,6 +24,7 @@ public class RedoxCalculator implements Calculator {
             System.out.println("  4. Combine two balanced half-reactions");
             System.out.println("  5. Full redox balance walkthrough (acid)");
             System.out.println("  6. Formal charge  (FC = V - L - B/2)");
+            System.out.println("  7. Galvanic cell  (E°cell, ΔG°, K, electron flow)");
             System.out.println("  0. Back");
             System.out.print("Choice: ");
             String ch = sc.nextLine().trim();
@@ -34,6 +35,7 @@ public class RedoxCalculator implements Calculator {
                 case "4" -> combineHalfReactions(sc);
                 case "5" -> fullWalkthrough(sc);
                 case "6" -> formalCharge(sc);
+                case "7" -> galvanicCell(sc);
                 case "0" -> running = false;
                 default  -> System.out.println("  Invalid choice.");
             }
@@ -316,6 +318,50 @@ public class RedoxCalculator implements Calculator {
         System.out.printf("  Multiply reduction x%d, oxidation x%d (equalize %de-)%n", mR, mO, lcm);
         System.out.println("\n  Final overall equation = " + mR + "×(reduction) + " + mO + "×(oxidation)");
         System.out.println("  Cancel water, H+, e- that appear on both sides.");
+    }
+
+    // ── 7. Galvanic cell ─────────────────────────────────────────────────────
+
+    private void galvanicCell(Scanner sc) {
+        System.out.println("\n-- Galvanic Cell Calculator --");
+        System.out.println("  E°cell = E°cathode - E°anode");
+        System.out.println("  The half-cell with the HIGHER reduction potential is the cathode (reduction).");
+        System.out.println("  The half-cell with the LOWER  reduction potential is the anode  (oxidation).");
+        System.out.println();
+        System.out.print("  Name/description of half-cell 1: ");
+        String name1 = sc.nextLine().trim();
+        double e1 = PHCalculator.readDouble(sc, "  E° (reduction) for half-cell 1 (V): ");
+        System.out.print("  Name/description of half-cell 2: ");
+        String name2 = sc.nextLine().trim();
+        double e2 = PHCalculator.readDouble(sc, "  E° (reduction) for half-cell 2 (V): ");
+        int n = (int) PHCalculator.readDouble(sc, "  Electrons transferred (n): ");
+
+        String cathode, anode;
+        double eCathode, eAnode;
+        if (e1 >= e2) {
+            cathode = name1; eCathode = e1;
+            anode   = name2; eAnode   = e2;
+        } else {
+            cathode = name2; eCathode = e2;
+            anode   = name1; eAnode   = e1;
+        }
+
+        double eCell = eCathode - eAnode;
+        double dG0   = -n * 96485 * eCell;
+        double K     = Math.exp(-dG0 / (8.314 * 298.15));
+
+        System.out.println("\n  ── Result ──────────────────────────────────────────");
+        System.out.printf("  Cathode (reduction): %s  E° = +%.4f V%n", cathode, eCathode);
+        System.out.printf("  Anode   (oxidation): %s  E° = +%.4f V%n", anode,   eAnode);
+        System.out.printf("  E°cell = E°cathode - E°anode = %.4f - %.4f = %.4f V%n",
+                eCathode, eAnode, eCell);
+        if (eCell > 0) System.out.println("  E°cell > 0 → reaction is spontaneous.");
+        else            System.out.println("  E°cell < 0 → reaction is non-spontaneous as written.");
+        System.out.printf("  ΔG° = -nFE°cell = -(%.0f)(96485)(%.4f) = %.2f J/mol  (%.2f kJ/mol)%n",
+                (double) n, eCell, dG0, dG0 / 1000);
+        System.out.printf("  K   = e^(-ΔG°/RT) at 25°C = %.4e%n", K);
+        System.out.println("\n  Electrons flow externally from ANODE → CATHODE.");
+        System.out.println("  Current flows externally from CATHODE → ANODE.");
     }
 
     // ── 6. Formal charge ─────────────────────────────────────────────────────
