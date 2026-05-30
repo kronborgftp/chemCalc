@@ -23,6 +23,7 @@ public class KineticsPanel extends BaseCalcPanel {
         tabs.addTab("Integrated Rate Law", integratedTab());
         tabs.addTab("Half-life",          halfLifeTab());
         tabs.addTab("Rate = k[A]ᵐ[B]ⁿ",  rateTab());
+        tabs.addTab("Graham's Law",       grahamsTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -246,6 +247,47 @@ public class KineticsPanel extends BaseCalcPanel {
             }
             sb.append(String.format("\nrate = %.6e mol/(L·s)", rate));
             output(sb.toString());
+        });
+        return p;
+    }
+
+    // ── Graham's Law ─────────────────────────────────────────────────────────
+
+    private JPanel grahamsTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("rate₁/rate₂ = √(M₂/M₁)  —  lighter gas effuses faster"), g);
+        g.gridwidth = 1;
+
+        String[] modes = {"Find rate₁/rate₂  (given M₁ and M₂)", "Find unknown molar mass  (given ratio and M₁)"};
+        JComboBox<String> mode = new JComboBox<>(modes);
+        g.gridy = 1; g.gridwidth = 2;
+        p.add(mode, g);
+        g.gridwidth = 1;
+
+        JTextField m1F    = addRow(p, g, 2, "Molar mass M₁ (g/mol):");
+        JTextField m2F    = addRow(p, g, 3, "Molar mass M₂ (g/mol)  [leave blank if unknown]:");
+        JTextField ratioF = addRow(p, g, 4, "rate₁/rate₂  [leave blank if unknown]:");
+
+        calcBtn(p, g, 5, "Calculate", () -> {
+            if (mode.getSelectedIndex() == 0) {
+                double M1 = parse(m1F), M2 = parse(m2F);
+                double ratio = Math.sqrt(M2 / M1);
+                output(String.format("Graham's Law\n─────────────────────────\n" +
+                        "M₁ = %.4f g/mol\nM₂ = %.4f g/mol\n\n" +
+                        "rate₁/rate₂ = √(M₂/M₁) = √(%.4f) = %.4f\n\n%s effuses faster.",
+                        M1, M2, M2 / M1, ratio,
+                        ratio > 1 ? "Gas 1 (M₁)" : "Gas 2 (M₂)"));
+            } else {
+                double M1 = parse(m1F), r = parse(ratioF);
+                double M2 = M1 * r * r;
+                output(String.format("Graham's Law → Unknown Molar Mass\n─────────────────────────\n" +
+                        "M₁ = %.4f g/mol\nrate₁/rate₂ = %.4f\n\n" +
+                        "M₂ = M₁ × (rate₁/rate₂)² = %.4f × %.4f = %.4f g/mol",
+                        M1, r, M1, r * r, M2));
+            }
         });
         return p;
     }

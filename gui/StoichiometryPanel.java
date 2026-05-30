@@ -26,6 +26,9 @@ public class StoichiometryPanel extends BaseCalcPanel {
         tabs.addTab("% Yield",          yieldTab());
         tabs.addTab("Empirical Formula",empiricalTab());
         tabs.addTab("Element Lookup",   lookupTab());
+        tabs.addTab("Colligative",      colligativeTab());
+        tabs.addTab("Isotope",          isotopeTab());
+        tabs.addTab("Electron Config",  electronConfigTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -306,6 +309,176 @@ public class StoichiometryPanel extends BaseCalcPanel {
         });
         qF.addActionListener(ev -> btn.doClick());
         addCalcRow(p, g, 1, btn);
+        return p;
+    }
+
+    // ── Colligative Properties ────────────────────────────────────────────────
+
+    private JPanel colligativeTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("ΔTb = i·Kb·m  |  ΔTf = i·Kf·m  |  m = mol solute / kg solvent  |  water: Kb=0.512, Kf=1.86"), g);
+        g.gridwidth = 1;
+
+        String[] modes = {"ΔTb — boiling point elevation", "ΔTf — freezing point depression",
+                "Molar mass from ΔTb or ΔTf", "Osmotic pressure  π = iMRT"};
+        JComboBox<String> mode = new JComboBox<>(modes);
+        g.gridy = 1; g.gridwidth = 2; p.add(mode, g); g.gridwidth = 1;
+
+        JTextField kF    = addRow(p, g, 2, "Kb or Kf of solvent (°C·kg/mol):");
+        JTextField dtF   = addRow(p, g, 3, "Observed ΔT (°C)  [blank if solving for ΔT]:");
+        JTextField msF   = addRow(p, g, 4, "Mass of solute (g):");
+        JTextField mmF   = addRow(p, g, 5, "Molar mass of solute (g/mol)  [blank if unknown]:");
+        JTextField msvF  = addRow(p, g, 6, "Mass of solvent (g):");
+        JTextField iF    = addRow(p, g, 7, "van't Hoff factor i (1 for non-electrolyte):");
+        JTextField molF  = addRow(p, g, 8, "Molarity M (mol/L)  [osmotic pressure only]:");
+        JTextField tF    = addRow(p, g, 9, "T (K)  [osmotic pressure only]:");
+        iF.setText("1");
+
+        calcBtn(p, g, 10, "Calculate", () -> {
+            int sel = mode.getSelectedIndex();
+            double i = parse(iF);
+            if (sel == 3) {
+                double M = parse(molF), T = parse(tF);
+                double pi = i * M * 0.08206 * T;
+                output(String.format("Osmotic Pressure\n──────────────────\nπ = iMRT = %.4f × %.4f × 0.08206 × %.2f\n  = %.4f atm  (= %.2f kPa)",
+                        i, M, T, pi, pi * 101.325));
+                return;
+            }
+            double K    = parse(kF);
+            double msSol = parse(msF);
+            double kgSolv = parse(msvF) / 1000.0;
+            if (sel == 2) {
+                double dT = parse(dtF);
+                double molarM = (i * K * msSol) / (dT * kgSolv);
+                output(String.format("Molar Mass from ΔT\n──────────────────────\n" +
+                        "M = (i·K·mass) / (ΔT·kg_solvent)\n  = (%.2f × %.3f × %.4f) / (%.4f × %.4f)\n  = %.4f g/mol",
+                        i, K, msSol, dT, kgSolv, molarM));
+            } else {
+                double mm = parse(mmF);
+                double molality = (msSol / mm) / kgSolv;
+                double dT = i * K * molality;
+                String label = sel == 0 ? "ΔTb" : "ΔTf";
+                output(String.format("%s Calculation\n──────────────────────\n" +
+                        "molality m = %.6f mol/kg\n%s = i·K·m = %.4f °C\n" +
+                        "New %s = normal %s %s %.4f °C",
+                        label, molality, label, dT, label.contains("b") ? "b.p." : "f.p.",
+                        label.contains("b") ? "b.p." : "f.p.",
+                        label.contains("b") ? "+" : "−", dT));
+            }
+        });
+        return p;
+    }
+
+    // ── Isotope Calculator ────────────────────────────────────────────────────
+
+    private JPanel isotopeTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("Protons = Z  |  Neutrons = A − Z  |  Electrons = Z − charge"), g);
+        g.gridwidth = 1;
+
+        int N = 3;
+        JTextField[] symF = new JTextField[N], aF = new JTextField[N], chF = new JTextField[N];
+        for (int i = 0; i < N; i++) {
+            int row = i * 3 + 1;
+            symF[i] = addRow(p, g, row,     "Isotope " + (i+1) + " symbol:");
+            aF[i]   = addRow(p, g, row + 1, "  Mass number A:");
+            chF[i]  = addRow(p, g, row + 2, "  Ion charge (0 for neutral):");
+            chF[i].setText("0");
+        }
+
+        JTextField[] _s = symF, _a = aF, _c = chF;
+        calcBtn(p, g, N * 3 + 1, "Calculate", () -> {
+            chemistry.PeriodicTable pt = chemistry.PeriodicTable.getInstance();
+            StringBuilder sb = new StringBuilder("Isotope Calculator\n──────────────────────────────\n");
+            int[] neutrons = new int[N];
+            String[] syms = new String[N];
+            boolean any = false;
+            for (int i = 0; i < N; i++) {
+                String sym = _s[i].getText().trim();
+                if (sym.isEmpty()) { neutrons[i] = -1; continue; }
+                chemistry.Element el = pt.get(sym);
+                if (el == null) { sb.append(sym).append(": not found\n"); continue; }
+                int A = (int) Double.parseDouble(_a[i].getText().trim());
+                int charge = (int) Double.parseDouble(_c[i].getText().trim());
+                int Z = el.atomicNumber, Nn = A - Z, electrons = Z - charge;
+                neutrons[i] = Nn; syms[i] = sym;
+                sb.append(String.format("%s-%d:  Z=%d protons,  N=%d neutrons,  %d electrons%n",
+                        sym, A, Z, Nn, electrons));
+                any = true;
+            }
+            if (any && N > 1) {
+                sb.append("\nRelationship:\n");
+                boolean sameN = true, sameA = true;
+                for (int i = 1; i < N; i++) { if (neutrons[i] != neutrons[0]) sameN = false; }
+                if (sameN) sb.append("  Same neutron count → ISOTONES\n");
+                else sb.append("  Different neutrons\n");
+            }
+            output(sb.toString());
+        });
+        return p;
+    }
+
+    // ── Electron Config ───────────────────────────────────────────────────────
+
+    private JPanel electronConfigTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("Enter outermost subshell config, e.g.  4s2 4p5  →  Period 4, Group 17 (halogen, Br)"), g);
+        g.gridwidth = 1;
+
+        JTextField cfF = addRow(p, g, 1, "Outermost config (e.g. '3s2 3p3'):");
+
+        calcBtn(p, g, 2, "Identify Group & Period", () -> {
+            String config = cfF.getText().trim().toLowerCase();
+            String[] tokens = config.split("\\s+");
+            int period = 0, sE = 0, pE = 0, dE = 0, pPer = 0;
+            for (String tok : tokens) {
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                        .compile("(\\d)(s|p|d|f)(\\d+)").matcher(tok);
+                if (!m.matches()) continue;
+                int n = Integer.parseInt(m.group(1));
+                String l = m.group(2);
+                int e = Integer.parseInt(m.group(3));
+                if (n > period) period = n;
+                switch (l) {
+                    case "s" -> sE = e;
+                    case "p" -> { pE = e; pPer = n; }
+                    case "d" -> dE = e;
+                }
+            }
+            if (period == 0) { output("Could not parse config. Use format: 3s2 3p5"); return; }
+            int group;
+            String block;
+            if (pE > 0 && pPer == period) { group = 10 + sE + pE; block = "p"; }
+            else if (dE > 0)              { group = sE + dE;       block = "d"; }
+            else                          { group = sE;            block = "s"; }
+            String groupName = switch (group) {
+                case 1  -> "alkali metals (or H)";
+                case 2  -> "alkaline earth metals";
+                case 13 -> "boron group";
+                case 14 -> "carbon group";
+                case 15 -> "nitrogen group / pnictogens";
+                case 16 -> "chalcogens";
+                case 17 -> "halogens";
+                case 18 -> "noble gases";
+                default -> "transition metals";
+            };
+            chemistry.PeriodicTable pt = chemistry.PeriodicTable.getInstance();
+            String element = "—";
+            for (chemistry.Element el : pt.getAll())
+                if (el.period == period && el.group == group) { element = el.symbol + " (" + el.name + ")"; break; }
+            output(String.format("Electron Configuration Analysis\n──────────────────────────────\n" +
+                    "Period = %d\nGroup  = %d  (%s-block)\nGroup name: %s\nElement: %s",
+                    period, group, block, groupName, element));
+        });
         return p;
     }
 

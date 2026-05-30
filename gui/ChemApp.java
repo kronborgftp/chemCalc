@@ -47,6 +47,7 @@ public class ChemApp extends JFrame {
         content.add(new KineticsPanel(), "kinetics");
         content.add(new EquilibriumPanel(), "equil");
         content.add(new StoichiometryPanel(), "stoich");
+        content.add(new VESPRPanel(), "vsepr");
         content.add(new ReferencePanel(), "ref");
         add(content, BorderLayout.CENTER);
 
@@ -70,6 +71,7 @@ public class ChemApp extends JFrame {
                 { "Kinetics", "kinetics" },
                 { "Equilibrium", "equil" },
                 { "Stoichiometry", "stoich" },
+                { "VSEPR / Geometry", "vsepr" },
                 { "Reference Tables", "ref" }
         };
 

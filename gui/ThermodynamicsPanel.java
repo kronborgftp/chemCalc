@@ -22,6 +22,7 @@ public class ThermodynamicsPanel extends BaseCalcPanel {
         tabs.addTab("Hess's Law",      hessTab());
         tabs.addTab("ΔH from ΔHf°",   dhfTab());
         tabs.addTab("Clausius-Clap.",  ccTab());
+        tabs.addTab("Bond Enthalpy",   bondEnthalpyTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -250,6 +251,83 @@ public class ThermodynamicsPanel extends BaseCalcPanel {
                 double dH = -R * Math.log(P2 / P1) / (1.0 / T2 - 1.0 / T1);
                 output(String.format("Clausius-Clapeyron → ΔH_vap\n──────────────────────────\nΔH_vap = %.4f J/mol  (%.4f kJ/mol)", dH, dH / 1000));
             }
+        });
+        return p;
+    }
+
+    // ── Bond Enthalpy ─────────────────────────────────────────────────────────
+
+    private JPanel bondEnthalpyTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 4;
+        p.add(hint("ΔH = Σ D(bonds broken) − Σ D(bonds formed)  |  D values are positive (kJ/mol per bond)"), g);
+        g.gridwidth = 1;
+
+        int N = 4;
+        JTextField[] dBroken = new JTextField[N], cBroken = new JTextField[N];
+        JTextField[] dFormed = new JTextField[N], cFormed = new JTextField[N];
+
+        g.gridx = 0; g.gridy = 1; g.gridwidth = 4;
+        p.add(lbl("Bonds BROKEN (reactants):"), g);
+        g.gridwidth = 1;
+        for (int i = 0; i < N; i++) {
+            int row = 2 + i;
+            g.gridx = 0; g.gridy = row; g.weightx = 0; g.fill = GridBagConstraints.NONE;
+            p.add(lbl("  Bond " + (i+1) + "  D (kJ/mol):"), g);
+            dBroken[i] = field();
+            g.gridx = 1; g.weightx = 0.6; g.fill = GridBagConstraints.HORIZONTAL;
+            p.add(dBroken[i], g);
+            g.gridx = 2; g.weightx = 0; g.fill = GridBagConstraints.NONE;
+            p.add(lbl("  × count:"), g);
+            cBroken[i] = field(); cBroken[i].setText("1");
+            cBroken[i].setPreferredSize(new Dimension(60, 28));
+            g.gridx = 3; g.weightx = 0.4; g.fill = GridBagConstraints.HORIZONTAL;
+            p.add(cBroken[i], g);
+        }
+
+        int off = 2 + N;
+        g.gridx = 0; g.gridy = off; g.gridwidth = 4;
+        p.add(lbl("Bonds FORMED (products):"), g);
+        g.gridwidth = 1;
+        for (int i = 0; i < N; i++) {
+            int row = off + 1 + i;
+            g.gridx = 0; g.gridy = row; g.weightx = 0; g.fill = GridBagConstraints.NONE;
+            p.add(lbl("  Bond " + (i+1) + "  D (kJ/mol):"), g);
+            dFormed[i] = field();
+            g.gridx = 1; g.weightx = 0.6; g.fill = GridBagConstraints.HORIZONTAL;
+            p.add(dFormed[i], g);
+            g.gridx = 2; g.weightx = 0; g.fill = GridBagConstraints.NONE;
+            p.add(lbl("  × count:"), g);
+            cFormed[i] = field(); cFormed[i].setText("1");
+            cFormed[i].setPreferredSize(new Dimension(60, 28));
+            g.gridx = 3; g.weightx = 0.4; g.fill = GridBagConstraints.HORIZONTAL;
+            p.add(cFormed[i], g);
+        }
+
+        JTextField[] _db = dBroken, _cb = cBroken, _df = dFormed, _cf = cFormed;
+        calcBtn(p, g, off + N + 1, "Calculate ΔH", () -> {
+            double sumB = 0, sumF = 0;
+            StringBuilder sb = new StringBuilder("Bond Enthalpy  ΔH = Σ broken − Σ formed\n────────────────────────────────────\n");
+            sb.append("Bonds broken:\n");
+            for (int i = 0; i < N; i++) {
+                if (_db[i].getText().trim().isEmpty()) continue;
+                double D = parse(_db[i]), c = _cb[i].getText().trim().isEmpty() ? 1 : parse(_cb[i]);
+                sumB += D * c;
+                sb.append(String.format("  %.1f × %.0f = %.1f kJ/mol\n", D, c, D * c));
+            }
+            sb.append("Bonds formed:\n");
+            for (int i = 0; i < N; i++) {
+                if (_df[i].getText().trim().isEmpty()) continue;
+                double D = parse(_df[i]), c = _cf[i].getText().trim().isEmpty() ? 1 : parse(_cf[i]);
+                sumF += D * c;
+                sb.append(String.format("  %.1f × %.0f = %.1f kJ/mol\n", D, c, D * c));
+            }
+            double dH = sumB - sumF;
+            sb.append(String.format("\nΣ D(broken) = %.2f kJ/mol\nΣ D(formed) = %.2f kJ/mol\nΔH = %.2f kJ/mol\n\n%s",
+                    sumB, sumF, dH, dH < 0 ? "Exothermic" : "Endothermic"));
+            output(sb.toString());
         });
         return p;
     }
