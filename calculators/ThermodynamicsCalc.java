@@ -26,6 +26,7 @@ public class ThermodynamicsCalc implements Calculator {
             System.out.println("  5. Standard enthalpy from ΔHf° values");
             System.out.println("  6. Clausius-Clapeyron (vapour pressure / boiling point)");
             System.out.println("  7. Reference: spontaneity table");
+            System.out.println("  8. Bond enthalpy → ΔH  (ΔH = Σ broken - Σ formed)");
             System.out.println("  0. Back");
             System.out.print("Choice: ");
             String ch = sc.nextLine().trim();
@@ -37,6 +38,7 @@ public class ThermodynamicsCalc implements Calculator {
                 case "5" -> enthalpyFromFormation(sc);
                 case "6" -> clausiusClapeyron(sc);
                 case "7" -> spontaneityTable();
+                case "8" -> bondEnthalpy(sc);
                 case "0" -> running = false;
                 default  -> System.out.println("  Invalid choice.");
             }
@@ -201,6 +203,35 @@ public class ThermodynamicsCalc implements Calculator {
         System.out.println("  -     -     Only at low T  (when |ΔH| > T|ΔS|)");
         System.out.println("  +     +     Only at high T (when T|ΔS| > ΔH)");
         System.out.println("\n  Crossover temperature T = ΔH/ΔS (where ΔG = 0)");
+    }
+
+    // ── 8. Bond enthalpy ΔH ──────────────────────────────────────────────────
+
+    private void bondEnthalpy(Scanner sc) {
+        System.out.println("\n-- Bond Enthalpy: ΔH = Σ D(bonds broken) - Σ D(bonds formed) --");
+        System.out.println("  Bond enthalpies D are always positive (energy to break a bond).");
+        System.out.println("  Broken bonds = reactants;  Formed bonds = products.");
+
+        double broken = sumBonds(sc, "broken (reactants)");
+        double formed = sumBonds(sc, "formed (products)");
+        double dH = broken - formed;
+
+        System.out.printf("%n  Σ D(broken) = %.2f kJ/mol%n", broken);
+        System.out.printf("  Σ D(formed) = %.2f kJ/mol%n", formed);
+        System.out.printf("  ΔH = %.2f kJ/mol%n", dH);
+        if (dH < 0) System.out.println("  Exothermic (more energy released forming bonds than breaking them).");
+        else         System.out.println("  Endothermic (more energy needed to break bonds than released forming them).");
+    }
+
+    private double sumBonds(Scanner sc, String label) {
+        int n = (int) PHCalculator.readDouble(sc, "Number of bond types " + label + ": ");
+        double total = 0;
+        for (int i = 1; i <= n; i++) {
+            double D     = PHCalculator.readDouble(sc, "  Bond enthalpy D (kJ/mol) for bond " + i + ": ");
+            double count = PHCalculator.readDouble(sc, "  Number of such bonds: ");
+            total += D * count;
+        }
+        return total;
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

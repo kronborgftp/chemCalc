@@ -239,10 +239,23 @@ public class PHCalculator implements Calculator {
             System.out.print("  " + prompt);
             String line = sc.nextLine().trim();
             try {
-                return Double.parseDouble(line);
+                return parseExpression(line);
             } catch (NumberFormatException e) {
-                System.out.println("  Invalid number, try again.");
+                System.out.println("  Invalid number, try again. (Tip: use e.g. 1.8e-5 or 10^(-5) or 10^-5)");
             }
         }
+    }
+
+    // Parses plain numbers, scientific notation (1.8e-5), and 10^x / 10^(x) expressions.
+    public static double parseExpression(String s) {
+        s = s.trim().toLowerCase().replace(" ", "");
+        // Match 10^(...) or 10^x
+        if (s.startsWith("10^")) {
+            String exp = s.substring(3);
+            if (exp.startsWith("(") && exp.endsWith(")"))
+                exp = exp.substring(1, exp.length() - 1);
+            return Math.pow(10, Double.parseDouble(exp));
+        }
+        return Double.parseDouble(s);
     }
 }

@@ -29,6 +29,7 @@ public class StoichiometryCalc implements Calculator {
             System.out.println("  6. Empirical formula from % mass composition");
             System.out.println("  7. Molecular formula from empirical formula + molar mass");
             System.out.println("  8. Periodic table lookup");
+            System.out.println("  9. Colligative properties  (ΔTb, ΔTf, osmotic pressure, molar mass)");
             System.out.println("  0. Back");
             System.out.print("Choice: ");
             String ch = sc.nextLine().trim();
@@ -41,6 +42,7 @@ public class StoichiometryCalc implements Calculator {
                 case "6" -> empiricalFormula(sc);
                 case "7" -> molecularFormula(sc);
                 case "8" -> periodicLookup(sc);
+                case "9" -> colligative(sc);
                 case "0" -> running = false;
                 default  -> System.out.println("  Invalid choice.");
             }
@@ -254,6 +256,86 @@ public class StoichiometryCalc implements Calculator {
         }
         System.out.println();
         System.out.printf("  M(molecular) = %.4f g/mol%n", empMass * n);
+    }
+
+    // ── 9. Colligative properties ─────────────────────────────────────────────
+
+    private void colligative(Scanner sc) {
+        System.out.println("\n-- Colligative Properties --");
+        System.out.println("  ΔTb = i·Kb·m   (boiling point elevation)");
+        System.out.println("  ΔTf = i·Kf·m   (freezing point depression)");
+        System.out.println("  π   = i·M·R·T  (osmotic pressure, R=0.08206 L·atm/(mol·K))");
+        System.out.println("  m   = moles solute / kg solvent  (molality)");
+        System.out.println("  i   = van't Hoff factor (1 for non-electrolytes)");
+        System.out.println();
+        System.out.println("  1. ΔTb — boiling point elevation");
+        System.out.println("  2. ΔTf — freezing point depression");
+        System.out.println("  3. Osmotic pressure π");
+        System.out.println("  4. Molar mass from ΔTb or ΔTf");
+        System.out.print("Choice: ");
+        String ch = sc.nextLine().trim();
+        switch (ch) {
+            case "1" -> bpElevation(sc);
+            case "2" -> fpDepression(sc);
+            case "3" -> osmoticPressure(sc);
+            case "4" -> molarMassFromColligative(sc);
+            default  -> System.out.println("  Invalid choice.");
+        }
+    }
+
+    private void bpElevation(Scanner sc) {
+        System.out.println("\n  ΔTb = i · Kb · m");
+        double Kb      = PHCalculator.readDouble(sc, "Kb of solvent (°C·kg/mol)  [water = 0.512]: ");
+        double massSol = PHCalculator.readDouble(sc, "Mass of solute (g): ");
+        double molarM  = PHCalculator.readDouble(sc, "Molar mass of solute (g/mol): ");
+        double kgSolv  = PHCalculator.readDouble(sc, "Mass of solvent (g): ") / 1000.0;
+        double i       = PHCalculator.readDouble(sc, "van't Hoff factor i (1 for non-electrolyte): ");
+        double molality = (massSol / molarM) / kgSolv;
+        double dTb = i * Kb * molality;
+        System.out.printf("%n  molality m = %.6f mol/kg%n", molality);
+        System.out.printf("  ΔTb = %.4f °C%n", dTb);
+        System.out.println("  New boiling point = normal b.p. + ΔTb");
+    }
+
+    private void fpDepression(Scanner sc) {
+        System.out.println("\n  ΔTf = i · Kf · m");
+        double Kf      = PHCalculator.readDouble(sc, "Kf of solvent (°C·kg/mol)  [water = 1.86]: ");
+        double massSol = PHCalculator.readDouble(sc, "Mass of solute (g): ");
+        double molarM  = PHCalculator.readDouble(sc, "Molar mass of solute (g/mol): ");
+        double kgSolv  = PHCalculator.readDouble(sc, "Mass of solvent (g): ") / 1000.0;
+        double i       = PHCalculator.readDouble(sc, "van't Hoff factor i (1 for non-electrolyte): ");
+        double molality = (massSol / molarM) / kgSolv;
+        double dTf = i * Kf * molality;
+        System.out.printf("%n  molality m = %.6f mol/kg%n", molality);
+        System.out.printf("  ΔTf = %.4f °C%n", dTf);
+        System.out.println("  New freezing point = normal f.p. - ΔTf");
+    }
+
+    private void osmoticPressure(Scanner sc) {
+        System.out.println("\n  π = i · M · R · T   (M = molarity, R = 0.08206 L·atm/(mol·K))");
+        double molarity = PHCalculator.readDouble(sc, "Molarity of solute M (mol/L): ");
+        double T        = PHCalculator.readDouble(sc, "Temperature T (K): ");
+        double i        = PHCalculator.readDouble(sc, "van't Hoff factor i: ");
+        double pi = i * molarity * 0.08206 * T;
+        System.out.printf("%n  π = %.4f atm  (= %.2f kPa)%n", pi, pi * 101.325);
+    }
+
+    private void molarMassFromColligative(Scanner sc) {
+        System.out.println("\n  Solve for molar mass from ΔTb or ΔTf:");
+        System.out.println("  M = (i · K · mass_solute) / (ΔT · kg_solvent)");
+        System.out.println("  1. From ΔTb (boiling point elevation)");
+        System.out.println("  2. From ΔTf (freezing point depression)");
+        System.out.print("Choice: ");
+        String ch = sc.nextLine().trim();
+        double K       = PHCalculator.readDouble(sc, ch.equals("1") ?
+                "Kb of solvent (°C·kg/mol) [water=0.512]: " :
+                "Kf of solvent (°C·kg/mol) [water=1.86]: ");
+        double dT      = PHCalculator.readDouble(sc, "Observed ΔT (°C): ");
+        double massSol = PHCalculator.readDouble(sc, "Mass of solute (g): ");
+        double kgSolv  = PHCalculator.readDouble(sc, "Mass of solvent (g): ") / 1000.0;
+        double i       = PHCalculator.readDouble(sc, "van't Hoff factor i (1 for non-electrolyte): ");
+        double molarM  = (i * K * massSol) / (dT * kgSolv);
+        System.out.printf("%n  Molar mass = %.4f g/mol%n", molarM);
     }
 
     // ── 8. Periodic table lookup ──────────────────────────────────────────────

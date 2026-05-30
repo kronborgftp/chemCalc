@@ -1,2 +1,15 @@
+# Compiled output
 *.class
+out/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# macOS
+.DS_Store
+
+# Claude Code
 .claude/

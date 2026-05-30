@@ -25,6 +25,7 @@ public class KineticsCalc implements Calculator {
             System.out.println("  4. Half-life");
             System.out.println("  5. Rate from rate law:  rate = k[A]^m[B]^n");
             System.out.println("  6. Determine reaction order from experimental data");
+            System.out.println("  7. Graham's law of effusion  (rate ∝ 1/√M)");
             System.out.println("  0. Back");
             System.out.print("Choice: ");
             String ch = sc.nextLine().trim();
@@ -35,6 +36,7 @@ public class KineticsCalc implements Calculator {
                 case "4" -> halfLife(sc);
                 case "5" -> rateFromLaw(sc);
                 case "6" -> determineOrder(sc);
+                case "7" -> grahamsLaw(sc);
                 case "0" -> running = false;
                 default  -> System.out.println("  Invalid choice.");
             }
@@ -202,6 +204,34 @@ public class KineticsCalc implements Calculator {
             rate *= Math.pow(conc, order);
         }
         System.out.printf("%n  rate = %.6e mol/(L·s)%n", rate);
+    }
+
+    // ── 7. Graham's law ───────────────────────────────────────────────────────
+
+    private void grahamsLaw(Scanner sc) {
+        System.out.println("\n-- Graham's Law of Effusion --");
+        System.out.println("  rate₁/rate₂ = √(M₂/M₁)");
+        System.out.println("  Lighter gases effuse faster.");
+        System.out.println("  1. Find rate ratio given molar masses");
+        System.out.println("  2. Find unknown molar mass given rate ratio and one molar mass");
+        System.out.print("Choice: ");
+        String ch = sc.nextLine().trim();
+        if (ch.equals("1")) {
+            double M1 = PHCalculator.readDouble(sc, "Molar mass M₁ (g/mol): ");
+            double M2 = PHCalculator.readDouble(sc, "Molar mass M₂ (g/mol): ");
+            double ratio = Math.sqrt(M2 / M1);
+            System.out.printf("%n  rate₁/rate₂ = √(M₂/M₁) = √(%.4f/%.4f) = %.4f%n", M2, M1, ratio);
+            System.out.printf("  Gas 1 effuses %.4f× %s than Gas 2.%n",
+                    ratio > 1 ? ratio : 1.0/ratio,
+                    ratio > 1 ? "faster" : "slower");
+        } else {
+            System.out.println("  Known: M₁ and rate₁/rate₂. Solve for M₂.");
+            System.out.println("  M₂ = M₁ · (rate₁/rate₂)²");
+            double M1    = PHCalculator.readDouble(sc, "Known molar mass M₁ (g/mol): ");
+            double ratio = PHCalculator.readDouble(sc, "rate₁/rate₂: ");
+            double M2    = M1 * ratio * ratio;
+            System.out.printf("%n  M₂ = %.4f g/mol%n", M2);
+        }
     }
 
     // ── 6. Determine order from data ──────────────────────────────────────────

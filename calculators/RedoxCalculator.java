@@ -23,6 +23,7 @@ public class RedoxCalculator implements Calculator {
             System.out.println("  3. Balance redox half-reaction (basic solution)");
             System.out.println("  4. Combine two balanced half-reactions");
             System.out.println("  5. Full redox balance walkthrough (acid)");
+            System.out.println("  6. Formal charge  (FC = V - L - B/2)");
             System.out.println("  0. Back");
             System.out.print("Choice: ");
             String ch = sc.nextLine().trim();
@@ -32,6 +33,7 @@ public class RedoxCalculator implements Calculator {
                 case "3" -> balanceHalfReaction(sc, true);
                 case "4" -> combineHalfReactions(sc);
                 case "5" -> fullWalkthrough(sc);
+                case "6" -> formalCharge(sc);
                 case "0" -> running = false;
                 default  -> System.out.println("  Invalid choice.");
             }
@@ -314,6 +316,31 @@ public class RedoxCalculator implements Calculator {
         System.out.printf("  Multiply reduction x%d, oxidation x%d (equalize %de-)%n", mR, mO, lcm);
         System.out.println("\n  Final overall equation = " + mR + "×(reduction) + " + mO + "×(oxidation)");
         System.out.println("  Cancel water, H+, e- that appear on both sides.");
+    }
+
+    // ── 6. Formal charge ─────────────────────────────────────────────────────
+
+    private void formalCharge(Scanner sc) {
+        System.out.println("\n-- Formal Charge --");
+        System.out.println("  FC = V - L - B/2");
+        System.out.println("  V = valence electrons of the free atom");
+        System.out.println("  L = lone pair (non-bonding) electrons on the atom");
+        System.out.println("  B = bonding electrons shared with the atom (both shared electrons)");
+        System.out.println("  (Each single bond contributes 2 to B, double bond 4, triple bond 6)");
+        System.out.println();
+        System.out.print("  Number of atoms to evaluate: ");
+        int n = (int) PHCalculator.readDouble(sc, "");
+        for (int i = 1; i <= n; i++) {
+            System.out.println("  --- Atom " + i + " ---");
+            double V  = PHCalculator.readDouble(sc, "  Valence electrons V (group number for main-group): ");
+            double L  = PHCalculator.readDouble(sc, "  Lone-pair electrons L on this atom: ");
+            double B  = PHCalculator.readDouble(sc, "  Bonding electrons B (2 per bond to this atom): ");
+            double FC = V - L - B / 2.0;
+            System.out.printf("  FC = %.0f - %.0f - %.0f/2 = %+.1f%n", V, L, B, FC);
+            if (FC == 0)       System.out.println("  (neutral atom in this structure)");
+            else if (FC > 0)   System.out.println("  (positive formal charge — fewer electrons than free atom)");
+            else               System.out.println("  (negative formal charge — more electrons than free atom)");
+        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

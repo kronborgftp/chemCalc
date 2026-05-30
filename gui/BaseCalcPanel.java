@@ -185,6 +185,6 @@ public abstract class BaseCalcPanel extends JPanel {
     }
 
     protected double parse(JTextField f) {
-        return Double.parseDouble(f.getText().trim());
+        return calculators.PHCalculator.parseExpression(f.getText().trim());
     }
 }
