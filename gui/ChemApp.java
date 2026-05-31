@@ -106,7 +106,8 @@ public class ChemApp extends JFrame {
 
         BiConsumer<String, Integer> nav = this::navigate;
 
-        content.add(new HomePanel(nav), "home");
+        content.add(new HomePanel(nav),    "home");
+        content.add(new SuggestPanel(nav), "suggest");
         register(new EquationBalancerPanel(), "eq");
         register(new PHPanel(),               "ph");
         register(new RedoxPanel(),            "redox");
@@ -168,6 +169,7 @@ public class ChemApp extends JFrame {
 
         String[][] items = {
             {"Home",             "home"},
+            {"Smart Suggest",    "suggest"},
             {"Equation Balancer","eq"},
             {"pH / Acid-Base",   "ph"},
             {"Redox",            "redox"},
