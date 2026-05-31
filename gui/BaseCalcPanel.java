@@ -1,33 +1,39 @@
 package gui;
 
+import chemistry.ChemUtils;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
 /**
  * Base class for every calculator panel.
- * Provides: header, scrollable input card, dark terminal output area.
+ * Provides: title header, split-pane layout (input top / terminal output bottom),
+ * and a library of factory helpers shared by all subclasses.
+ *
+ * All visual constants are pulled from {@link Theme} so the palette is defined
+ * in exactly one place.
  */
 public abstract class BaseCalcPanel extends JPanel {
 
-    protected JTextArea    outputArea;
-    protected JPanel       inputPanel;
-    protected JTabbedPane  mainTabs;
+    protected JTextArea   outputArea;
+    protected JPanel      inputPanel;
+    protected JTabbedPane mainTabs;
 
-    // ── Shared palette ────────────────────────────────────────────────────────
-    protected static final Color BG         = new Color(245, 246, 250);
-    protected static final Color CARD_BG    = Color.WHITE;
-    protected static final Color ACCENT     = new Color(37, 99, 235);
-    protected static final Color OUTPUT_BG  = new Color(18, 22, 30);
-    protected static final Color OUTPUT_FG  = new Color(100, 210, 130);
-    protected static final Color HINT_FG    = new Color(130, 130, 140);
-    protected static final Color HEADER_FG  = new Color(20, 25, 40);
+    // ── Palette & typography (delegates to Theme) ─────────────────────────────
+    protected static final Color BG        = Theme.BG;
+    protected static final Color CARD_BG   = Theme.CARD_BG;
+    protected static final Color ACCENT    = Theme.ACCENT;
+    protected static final Color OUTPUT_BG = Theme.OUTPUT_BG;
+    protected static final Color OUTPUT_FG = Theme.OUTPUT_FG;
+    protected static final Color HINT_FG   = Theme.HINT_FG;
+    protected static final Color HEADER_FG = Theme.HEADING;
 
-    protected static final Font TITLE_FONT  = new Font("SansSerif", Font.BOLD, 20);
-    protected static final Font LABEL_FONT  = new Font("SansSerif", Font.PLAIN, 14);
-    protected static final Font MONO_FONT   = new Font("Monospaced", Font.PLAIN, 13);
-    protected static final Font HINT_FONT   = new Font("SansSerif", Font.ITALIC, 12);
-    protected static final Font TAB_FONT    = new Font("SansSerif", Font.PLAIN, 13);
+    protected static final Font TITLE_FONT = Theme.TITLE_FONT;
+    protected static final Font LABEL_FONT = Theme.LABEL_FONT;
+    protected static final Font MONO_FONT  = Theme.MONO_FONT;
+    protected static final Font HINT_FONT  = Theme.HINT_FONT;
+    protected static final Font TAB_FONT   = Theme.TAB_FONT;
 
     public BaseCalcPanel(String title) {
         setLayout(new BorderLayout(0, 10));
@@ -41,22 +47,14 @@ public abstract class BaseCalcPanel extends JPanel {
         header.setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
         add(header, BorderLayout.NORTH);
 
-        // ── Input card (top split component) ─────────────────────────────────
+        // ── Input area — no outer scroll pane so each tab owns its own scrolling
         inputPanel = new JPanel();
         inputPanel.setBackground(CARD_BG);
         inputPanel.setBorder(card());
+        inputPanel.setMinimumSize(new Dimension(0, 180));
 
-        JScrollPane inputScroll = new JScrollPane(inputPanel,
-                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        inputScroll.setBorder(null);
-        inputScroll.getViewport().setBackground(CARD_BG);
-        // Prevent the scroll pane from stealing keyboard focus (macOS clipboard fix)
-        inputScroll.setFocusable(false);
-        inputScroll.getViewport().setFocusable(false);
-
-        // ── Output panel (bottom) ─────────────────────────────────────────────
-        outputArea = new JTextArea(9, 50);
+        // ── Output area ───────────────────────────────────────────────────────
+        outputArea = new JTextArea(8, 50);
         outputArea.setEditable(false);
         outputArea.setFont(MONO_FONT);
         outputArea.setBackground(OUTPUT_BG);
@@ -72,18 +70,21 @@ public abstract class BaseCalcPanel extends JPanel {
 
         JScrollPane outScroll = new JScrollPane(outputArea);
         outScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 202, 210), 1, true));
+        outScroll.getVerticalScrollBar().setUnitIncrement(18);
 
         JPanel outWrapper = new JPanel(new BorderLayout(0, 2));
         outWrapper.setBackground(BG);
-        outWrapper.add(outLbl, BorderLayout.NORTH);
+        outWrapper.setMinimumSize(new Dimension(0, 80));
+        outWrapper.add(outLbl,    BorderLayout.NORTH);
         outWrapper.add(outScroll, BorderLayout.CENTER);
 
         // ── Split pane ────────────────────────────────────────────────────────
-        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, inputScroll, outWrapper);
-        split.setResizeWeight(0.58);
+        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, inputPanel, outWrapper);
+        split.setResizeWeight(0.65);
+        split.setContinuousLayout(true);
         split.setBorder(null);
         split.setBackground(BG);
-        split.setDividerSize(6);
+        split.setDividerSize(5);
         add(split, BorderLayout.CENTER);
 
         buildUI();
@@ -91,7 +92,7 @@ public abstract class BaseCalcPanel extends JPanel {
 
     protected abstract void buildUI();
 
-    // ── Factory helpers ───────────────────────────────────────────────────────
+    // ── Component factories ───────────────────────────────────────────────────
 
     protected JButton calcButton(String label) {
         JButton btn = new JButton(label);
@@ -103,12 +104,8 @@ public abstract class BaseCalcPanel extends JPanel {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(180, 34));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(new Color(29, 78, 216));
-            }
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(ACCENT);
-            }
+            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(Theme.ACCENT_DARK); }
+            public void mouseExited (java.awt.event.MouseEvent e) { btn.setBackground(ACCENT); }
         });
         return btn;
     }
@@ -123,12 +120,10 @@ public abstract class BaseCalcPanel extends JPanel {
         return tf;
     }
 
-    /** Attaches a right-click context menu with Paste / Clear to any text field. */
     protected static void attachPasteMenu(javax.swing.text.JTextComponent tc) {
         JPopupMenu menu = new JPopupMenu();
-
-        JMenuItem pasteItem = new JMenuItem("Paste");
-        pasteItem.addActionListener(e -> {
+        JMenuItem paste = new JMenuItem("Paste");
+        paste.addActionListener(e -> {
             try {
                 java.awt.datatransfer.Clipboard cb =
                         java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -136,12 +131,10 @@ public abstract class BaseCalcPanel extends JPanel {
                 if (text != null) tc.replaceSelection(text.trim());
             } catch (Exception ignored) {}
         });
-
-        JMenuItem clearItem = new JMenuItem("Clear");
-        clearItem.addActionListener(e -> tc.setText(""));
-
-        menu.add(pasteItem);
-        menu.add(clearItem);
+        JMenuItem clear = new JMenuItem("Clear");
+        clear.addActionListener(e -> tc.setText(""));
+        menu.add(paste);
+        menu.add(clear);
         tc.setComponentPopupMenu(menu);
     }
 
@@ -165,18 +158,16 @@ public abstract class BaseCalcPanel extends JPanel {
         return l;
     }
 
-    /** Adds a label+field row in a GridBagLayout panel. Returns the text field. */
     protected JTextField addRow(JPanel p, GridBagConstraints g, int row, String labelText) {
         g.gridx = 0; g.gridy = row; g.weightx = 0; g.fill = GridBagConstraints.NONE;
         p.add(lbl(labelText), g);
         JTextField tf = field();
         g.gridx = 1; g.weightx = 1; g.fill = GridBagConstraints.HORIZONTAL;
         p.add(tf, g);
-        g.weightx = 0; g.fill = GridBagConstraints.NONE; // reset
+        g.weightx = 0; g.fill = GridBagConstraints.NONE;
         return tf;
     }
 
-    /** Adds a centred calculate button spanning two columns. */
     protected void addCalcRow(JPanel p, GridBagConstraints g, int row, JButton btn) {
         g.gridx = 0; g.gridy = row; g.gridwidth = 2;
         g.anchor = GridBagConstraints.CENTER; g.fill = GridBagConstraints.NONE;
@@ -184,7 +175,21 @@ public abstract class BaseCalcPanel extends JPanel {
         g.gridwidth = 1; g.anchor = GridBagConstraints.WEST;
     }
 
-    /** Standard GridBagConstraints with comfortable insets. */
+    /**
+     * Adds a labelled calculate button at the given grid row.
+     * Catches {@link NumberFormatException} from {@code action} and writes a
+     * friendly error to the output area — so individual panels never need to
+     * repeat that try/catch boilerplate.
+     */
+    protected void calcBtn(JPanel p, GridBagConstraints g, int row, String label, Runnable action) {
+        JButton btn = calcButton(label);
+        btn.addActionListener(e -> {
+            try { action.run(); }
+            catch (NumberFormatException ex) { output("Error: enter valid numbers."); }
+        });
+        addCalcRow(p, g, row, btn);
+    }
+
     protected GridBagConstraints gbc() {
         GridBagConstraints g = new GridBagConstraints();
         g.insets = new Insets(6, 8, 6, 8);
@@ -192,7 +197,6 @@ public abstract class BaseCalcPanel extends JPanel {
         return g;
     }
 
-    /** Creates a standard white tab panel with GridBagLayout. */
     protected JPanel tabPanel() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setBackground(CARD_BG);
@@ -216,7 +220,8 @@ public abstract class BaseCalcPanel extends JPanel {
         outputArea.setCaretPosition(0);
     }
 
+    /** Parses a field value, accepting scientific notation and 10^x shorthand. */
     protected double parse(JTextField f) {
-        return calculators.PHCalculator.parseExpression(f.getText().trim());
+        return ChemUtils.parseExpression(f.getText().trim());
     }
 }

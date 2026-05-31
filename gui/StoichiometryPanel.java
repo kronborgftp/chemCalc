@@ -149,7 +149,7 @@ public class StoichiometryPanel extends BaseCalcPanel {
     private JPanel limitingTab() {
         JPanel p = tabPanel();
         GridBagConstraints g = gbc();
-        g.gridx = 0; g.gridy = 0; g.gridwidth = 4;
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 6;
         p.add(hint("Enter up to 3 reactants, their stoich. coefficients, and available masses."), g);
         g.gridwidth = 1;
 
@@ -187,8 +187,45 @@ public class StoichiometryPanel extends BaseCalcPanel {
         p.add(pcoefF, g);
         g.weightx = 0; g.fill = GridBagConstraints.NONE;
 
+        // ── Example loader ────────────────────────────────────────────────────
+        // {r1formula, r1coeff, r1mass, r2formula, r2coeff, r2mass, r3formula, r3coeff, r3mass,
+        //  productFormula, productCoeff, label}
+        String[][] examples = {
+            {"H2","2","10",    "O2","1","16",   "","","",  "H2O","2",    "2H₂+O₂→2H₂O"},
+            {"C6H12O6","1","1000","","","",      "","","",  "C2H5OH","2", "Fermentation"},
+            {"N2","1","28",    "H2","3","10",   "","","",  "NH3","2",    "N₂+3H₂→2NH₃"},
+            {"Al","2","10",    "Br2","3","50",  "","","",  "AlBr3","2",  "2Al+3Br₂→2AlBr₃"},
+        };
+
+        JPanel exRow = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+        exRow.setBackground(CARD_BG);
+        exRow.add(lbl("Examples:"));
+        for (String[] ex : examples) {
+            JButton btn = new JButton(ex[11]);
+            btn.setFont(new Font("SansSerif", Font.PLAIN, 11));
+            btn.setBackground(new Color(240, 242, 255));
+            btn.setForeground(new Color(37, 99, 235));
+            btn.setBorderPainted(false);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.addActionListener(e -> {
+                for (int i = 0; i < N; i++) {
+                    formF[i].setText(ex[i * 3]);
+                    coeffF[i].setText(ex[i * 3 + 1]);
+                    massF[i].setText(ex[i * 3 + 2]);
+                }
+                prodF.setText(ex[9]);
+                pcoefF.setText(ex[10]);
+            });
+            exRow.add(btn);
+        }
+
+        g.gridx = 0; g.gridy = N + 2; g.gridwidth = 6;
+        p.add(exRow, g);
+        g.gridwidth = 1;
+
         JTextField[] _f = formF, _co = coeffF, _m = massF;
-        calcBtn(p, g, N + 2, "Find Limiting Reagent", () -> {
+        calcBtn(p, g, N + 3, "Find Limiting Reagent", () -> {
             double minRatio = Double.MAX_VALUE;
             int limIdx = 0;
             StringBuilder sb = new StringBuilder("Limiting Reagent\n─────────────────────────────────\n");
@@ -707,12 +744,4 @@ public class StoichiometryPanel extends BaseCalcPanel {
 
     // ── Helper ────────────────────────────────────────────────────────────────
 
-    private void calcBtn(JPanel p, GridBagConstraints g, int row, String label, Runnable action) {
-        JButton btn = calcButton(label);
-        btn.addActionListener(e -> {
-            try { action.run(); }
-            catch (NumberFormatException ex) { output("Error: enter valid numbers."); }
-        });
-        addCalcRow(p, g, row, btn);
-    }
 }

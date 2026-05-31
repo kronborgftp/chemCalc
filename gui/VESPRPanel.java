@@ -1,5 +1,6 @@
 package gui;
 
+import chemistry.ChemUtils;
 import chemistry.Element;
 import chemistry.FormulaParser;
 import chemistry.PeriodicTable;
@@ -43,7 +44,7 @@ public class VESPRPanel extends BaseCalcPanel {
 
         calcBtn(p, g, 5, "Analyse", () -> {
             String formula = fmF.getText().trim();
-            int charge = chF.getText().trim().isEmpty() ? 0 : (int) calculators.PHCalculator.parseExpression(chF.getText().trim());
+            int charge = chF.getText().trim().isEmpty() ? 0 : (int) ChemUtils.parseExpression(chF.getText().trim());
             Map<String, Integer> comp = FormulaParser.parse(formula);
             if (comp.isEmpty()) { output("Could not parse formula."); return; }
 
@@ -62,7 +63,7 @@ public class VESPRPanel extends BaseCalcPanel {
             int bp, lp;
             String bondedTxt = bondedF.getText().trim();
             if (!bondedTxt.isEmpty()) {
-                bp = (int) calculators.PHCalculator.parseExpression(bondedTxt);
+                bp = (int) ChemUtils.parseExpression(bondedTxt);
                 lp = Math.max(0, (veC - bp) / 2);
             } else if (nCentral > 1) {
                 output("'" + centralSym + "' appears " + nCentral + " times.\nFill in 'Atoms bonded to ONE central atom'.");
@@ -106,8 +107,8 @@ public class VESPRPanel extends BaseCalcPanel {
         JTextField lpF = addRow(p, g, 2, "Lone pairs on central atom:");
 
         calcBtn(p, g, 3, "Show Geometry", () -> {
-            int bp = (int) calculators.PHCalculator.parseExpression(bpF.getText().trim());
-            int lp = (int) calculators.PHCalculator.parseExpression(lpF.getText().trim());
+            int bp = (int) ChemUtils.parseExpression(bpF.getText().trim());
+            int lp = (int) ChemUtils.parseExpression(lpF.getText().trim());
             output(buildResult("?", bp, lp, Collections.emptyMap(), "Manual input"));
         });
         return p;
@@ -259,12 +260,4 @@ public class VESPRPanel extends BaseCalcPanel {
         return central != null ? central : comp.keySet().iterator().next();
     }
 
-    private void calcBtn(JPanel p, GridBagConstraints g, int row, String label, Runnable action) {
-        JButton btn = calcButton(label);
-        btn.addActionListener(e -> {
-            try { action.run(); }
-            catch (Exception ex) { output("Error: " + ex.getMessage()); }
-        });
-        addCalcRow(p, g, row, btn);
-    }
 }

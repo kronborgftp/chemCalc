@@ -7,13 +7,13 @@ import java.util.function.BiConsumer;
 
 public class HomePanel extends JPanel {
 
-    private static final Color BG       = new Color(245, 246, 250);
-    private static final Color CARD_BG  = Color.WHITE;
-    private static final Color ACCENT   = new Color(37, 99, 235);
-    private static final Color HEADING  = new Color(18, 32, 68);
-    private static final Color DESC_FG  = new Color(70, 75, 95);
-    private static final Color DIVIDER  = new Color(220, 222, 232);
-    private static final Color HOVER_BG = new Color(237, 242, 255);
+    private static final Color BG       = Theme.BG;
+    private static final Color CARD_BG  = Theme.CARD_BG;
+    private static final Color ACCENT   = Theme.ACCENT;
+    private static final Color HEADING  = Theme.HEADING;
+    private static final Color DESC_FG  = Theme.DESC_FG;
+    private static final Color DIVIDER  = Theme.DIVIDER;
+    private static final Color HOVER_BG = Theme.HOVER_BG;
 
     // Groups: {groupName, panelKey, {label, description, tabIndex}, ...}
     private static final Object[][] GROUPS = {

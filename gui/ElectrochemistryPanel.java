@@ -373,12 +373,4 @@ public class ElectrochemistryPanel extends BaseCalcPanel {
 
     // ── Helper ────────────────────────────────────────────────────────────────
 
-    private void calcBtn(JPanel p, GridBagConstraints g, int row, String label, Runnable action) {
-        JButton btn = calcButton(label);
-        btn.addActionListener(e -> {
-            try { action.run(); }
-            catch (NumberFormatException ex) { output("Error: enter valid numbers."); }
-        });
-        addCalcRow(p, g, row, btn);
-    }
 }

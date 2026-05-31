@@ -34,8 +34,8 @@ public class ReferencePanel extends JPanel {
         JTextArea area = new JTextArea(content);
         area.setEditable(false);
         area.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        area.setBackground(new Color(18, 22, 30));
-        area.setForeground(new Color(100, 210, 130));
+        area.setBackground(Theme.OUTPUT_BG);
+        area.setForeground(Theme.OUTPUT_FG);
         area.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
         area.setLineWrap(false);
         JScrollPane sp = new JScrollPane(area);

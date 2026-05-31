@@ -17,12 +17,12 @@ import java.util.function.BiConsumer;
  */
 public class SuggestPanel extends JPanel {
 
-    private static final Color BG      = new Color(245, 246, 250);
-    private static final Color CARD_BG = Color.WHITE;
-    private static final Color HEADING = new Color(18, 32, 68);
-    private static final Color ACCENT  = new Color(37, 99, 235);
-    private static final Color DIVIDER = new Color(220, 222, 232);
-    private static final Color BAR_BG  = new Color(220, 228, 250);
+    private static final Color BG      = Theme.BG;
+    private static final Color CARD_BG = Theme.CARD_BG;
+    private static final Color HEADING = Theme.HEADING;
+    private static final Color ACCENT  = Theme.ACCENT;
+    private static final Color DIVIDER = Theme.DIVIDER;
+    private static final Color BAR_BG  = new Color(220, 213, 194); // warm tan relevance bar
 
     // ── Keyword table ─────────────────────────────────────────────────────────
     // Each entry: {label matching ALL_CALCS[i][0], pipe-delimited phrases}
@@ -152,10 +152,12 @@ public class SuggestPanel extends JPanel {
     };
 
     private final BiConsumer<String, Integer> nav;
+    private final FactsPanel factsPanel;
     private JPanel resultsPanel;
 
-    public SuggestPanel(BiConsumer<String, Integer> nav) {
+    public SuggestPanel(BiConsumer<String, Integer> nav, FactsPanel factsPanel) {
         this.nav = nav;
+        this.factsPanel = factsPanel;
         setLayout(new BorderLayout());
         setBackground(BG);
 
@@ -327,7 +329,7 @@ public class SuggestPanel extends JPanel {
         int maxCalcScore = scores.isEmpty() ? 1 : Math.max(1, scores.get(0)[1]);
 
         // Score facts
-        List<int[]> factScores = FactsPanel.scoreFacts(questionText);
+        List<int[]> factScores = LectureData.scoreFacts(questionText);
         int maxFactScore = factScores.isEmpty() ? 1 : Math.max(1, factScores.get(0)[1]);
 
         // Render
@@ -378,9 +380,9 @@ public class SuggestPanel extends JPanel {
                 resultsPanel.add(fhdr);
 
                 for (int fi = 0; fi < showFacts; fi++) {
-                    int factIdx = factScores.get(fi)[0];
-                    int sc      = factScores.get(fi)[1];
-                    String[] fact = FactsPanel.FACTS[factIdx];
+                    int factIdx        = factScores.get(fi)[0];
+                    int sc             = factScores.get(fi)[1];
+                    LectureData.Fact fact = LectureData.FACTS[factIdx];
                     int pct = (int) Math.round(100.0 * sc / maxFactScore);
                     resultsPanel.add(factResultCard(fi + 1, fact, pct));
                     resultsPanel.add(Box.createVerticalStrut(8));
@@ -392,9 +394,12 @@ public class SuggestPanel extends JPanel {
         resultsPanel.repaint();
     }
 
-    private JPanel factResultCard(int rank, String[] fact, int pct) {
+    private JPanel factResultCard(int rank, LectureData.Fact fact, int pct) {
+        final Color cardBg = new Color(250, 252, 255);
+        final Color green  = new Color(6, 95, 70);
+
         JPanel card = new JPanel(new BorderLayout(12, 4));
-        card.setBackground(new Color(250, 252, 255));
+        card.setBackground(cardBg);
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(167, 243, 208), 1, true),
             BorderFactory.createEmptyBorder(10, 14, 10, 14)));
@@ -403,27 +408,27 @@ public class SuggestPanel extends JPanel {
 
         JLabel rankLbl = new JLabel("#" + rank);
         rankLbl.setFont(new Font("SansSerif", Font.BOLD, 16));
-        rankLbl.setForeground(new Color(6, 95, 70));
+        rankLbl.setForeground(green);
         rankLbl.setPreferredSize(new Dimension(32, 40));
         rankLbl.setHorizontalAlignment(SwingConstants.CENTER);
 
         JPanel centre = new JPanel();
         centre.setLayout(new BoxLayout(centre, BoxLayout.Y_AXIS));
-        centre.setBackground(new Color(250, 252, 255));
+        centre.setBackground(cardBg);
 
-        JLabel topicLbl = new JLabel("FACT  ·  " + fact[0]);
+        JLabel topicLbl = new JLabel("FACT  ·  " + fact.topic());
         topicLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
-        topicLbl.setForeground(new Color(6, 95, 70));
+        topicLbl.setForeground(green);
         topicLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel titleLbl = new JLabel("<html><b>" + fact[1] + "</b></html>");
+        JLabel titleLbl = new JLabel("<html><b>" + fact.title() + "</b></html>");
         titleLbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
         titleLbl.setForeground(HEADING);
         titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel ansLbl = new JLabel("<html><i>" + fact[2] + "</i></html>");
+        JLabel ansLbl = new JLabel("<html><i>" + fact.answer() + "</i></html>");
         ansLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        ansLbl.setForeground(new Color(6, 95, 70));
+        ansLbl.setForeground(green);
         ansLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         centre.add(topicLbl);
@@ -433,20 +438,21 @@ public class SuggestPanel extends JPanel {
         centre.add(ansLbl);
 
         JPanel right = new JPanel(new BorderLayout());
-        right.setBackground(new Color(250, 252, 255));
+        right.setBackground(cardBg);
+
         JLabel scoreLbl = new JLabel(pct + "%");
         scoreLbl.setFont(new Font("SansSerif", Font.BOLD, 12));
-        scoreLbl.setForeground(new Color(6, 95, 70));
+        scoreLbl.setForeground(green);
         scoreLbl.setHorizontalAlignment(SwingConstants.RIGHT);
 
         JButton openBtn = new JButton("Facts →");
         openBtn.setFont(new Font("SansSerif", Font.PLAIN, 11));
         openBtn.setBackground(new Color(209, 250, 229));
-        openBtn.setForeground(new Color(6, 95, 70));
+        openBtn.setForeground(green);
         openBtn.setBorderPainted(false);
         openBtn.setFocusPainted(false);
         openBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        openBtn.addActionListener(e -> nav.accept("facts", -1));
+        openBtn.addActionListener(e -> { nav.accept("facts", -1); factsPanel.showFact(fact); });
 
         right.add(scoreLbl, BorderLayout.NORTH);
         right.add(openBtn,  BorderLayout.SOUTH);
@@ -455,7 +461,9 @@ public class SuggestPanel extends JPanel {
         card.add(centre,  BorderLayout.CENTER);
         card.add(right,   BorderLayout.EAST);
         card.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent e) { nav.accept("facts", -1); }
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                nav.accept("facts", -1); factsPanel.showFact(fact);
+            }
         });
         return card;
     }

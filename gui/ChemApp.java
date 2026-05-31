@@ -77,6 +77,10 @@ public class ChemApp extends JFrame {
         {"VSEPR from Formula",       "Auto-detect central atom, lone pairs, geometry, polarity", "vsepr",    "0"},
         {"VSEPR Manual",             "Enter bonding domains and lone pairs → geometry",           "vsepr",    "1"},
         {"VSEPR Reference Table",    "All BP/LP combos: geometry, bond angle, planar?",          "vsepr",    "2"},
+        {"Degree of Polymerisation", "n = M_polymer / M_repeat unit (formula → MW auto)",        "organic",  "0"},
+        {"Combustion Analysis",      "CO₂ + H₂O masses → empirical formula of unknown compound","organic",  "1"},
+        {"Functional Groups Ref",    "Quick-ID table: alcohol, ether, ester, amine, amide…",     "organic",  "2"},
+        {"Chirality Reference",      "Chiral centres, R/S, enantiomers, diastereomers, meso",   "organic",  "3"},
         {"Reference Tables",         "Ka/Kb, ΔHf°, Ksp, E°, constants, organic classes",        "ref",      "-1"},
     };
 
@@ -90,27 +94,28 @@ public class ChemApp extends JFrame {
 
         // ── Title bar ─────────────────────────────────────────────────────────
         JPanel titleBar = new JPanel(new BorderLayout());
-        titleBar.setBackground(new Color(18, 32, 68));
+        titleBar.setBackground(Theme.SIDEBAR_BG);
         titleBar.setPreferredSize(new Dimension(0, 44));
         titleBar.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 18));
         JLabel title = new JLabel("DTU Chemistry Exam Toolkit");
-        title.setForeground(Color.WHITE);
+        title.setForeground(Theme.SIDEBAR_TEXT);
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
         JLabel version = new JLabel("v1.1  —  " + ALL_CALCS.length + " calculators");
-        version.setForeground(new Color(150, 170, 220));
-        version.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        version.setForeground(Theme.SIDEBAR_MUTED);
+        version.setFont(Theme.SMALL_FONT);
         titleBar.add(title, BorderLayout.WEST);
         titleBar.add(version, BorderLayout.EAST);
         add(titleBar, BorderLayout.NORTH);
 
         // ── Content area ──────────────────────────────────────────────────────
-        content.setBackground(new Color(245, 246, 250));
+        content.setBackground(Theme.BG);
 
         BiConsumer<String, Integer> nav = this::navigate;
 
-        content.add(new HomePanel(nav),    "home");
-        content.add(new SuggestPanel(nav), "suggest");
-        content.add(new FactsPanel(nav),   "facts");
+        FactsPanel factsPanel = new FactsPanel(nav);
+        content.add(new HomePanel(nav),              "home");
+        content.add(new SuggestPanel(nav, factsPanel), "suggest");
+        content.add(factsPanel,                      "facts");
         register(new EquationBalancerPanel(), "eq");
         register(new PHPanel(),               "ph");
         register(new RedoxPanel(),            "redox");
@@ -120,6 +125,7 @@ public class ChemApp extends JFrame {
         register(new EquilibriumPanel(),      "equil");
         register(new StoichiometryPanel(),    "stoich");
         register(new VESPRPanel(),            "vsepr");
+        register(new OrgChemPanel(),          "organic");
         content.add(new ReferencePanel(),     "ref");
         add(content, BorderLayout.CENTER);
 
@@ -146,28 +152,28 @@ public class ChemApp extends JFrame {
 
     private JPanel buildSidebar(BiConsumer<String, Integer> nav) {
         JPanel sidebar = new JPanel(new BorderLayout());
-        sidebar.setBackground(new Color(24, 28, 42));
+        sidebar.setBackground(Theme.SIDEBAR_BG);
         sidebar.setPreferredSize(new Dimension(218, 0));
 
         // ── Search field ──────────────────────────────────────────────────────
         JTextField search = new JTextField("Search calculators...");
-        search.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        search.setBackground(new Color(36, 41, 60));
-        search.setForeground(new Color(130, 140, 165));
-        search.setCaretColor(new Color(120, 160, 255));
+        search.setFont(Theme.SMALL_FONT);
+        search.setBackground(Theme.SIDEBAR_BTN);
+        search.setForeground(Theme.SIDEBAR_MUTED);
+        search.setCaretColor(Theme.ACCENT);
         search.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(55, 65, 100), 1),
+            BorderFactory.createLineBorder(new Color(70, 58, 40), 1),
             BorderFactory.createEmptyBorder(5, 8, 5, 8)));
 
         JPanel searchWrap = new JPanel(new BorderLayout());
-        searchWrap.setBackground(new Color(24, 28, 42));
+        searchWrap.setBackground(Theme.SIDEBAR_BG);
         searchWrap.setBorder(BorderFactory.createEmptyBorder(10, 8, 6, 8));
         searchWrap.add(search, BorderLayout.CENTER);
 
         // ── Nav list ─────────────────────────────────────────────────────────
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
-        navPanel.setBackground(new Color(24, 28, 42));
+        navPanel.setBackground(Theme.SIDEBAR_BG);
         navPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 12, 8));
 
         String[][] items = {
@@ -183,6 +189,7 @@ public class ChemApp extends JFrame {
             {"Equilibrium",      "equil"},
             {"Stoichiometry",    "stoich"},
             {"VSEPR / Geometry", "vsepr"},
+            {"Organic Chemistry","organic"},
             {"Reference Tables", "ref"},
         };
         for (String[] it : items) {
@@ -196,14 +203,14 @@ public class ChemApp extends JFrame {
         // ── Results list (shown while searching) ──────────────────────────────
         JPanel resultsPanel = new JPanel();
         resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
-        resultsPanel.setBackground(new Color(24, 28, 42));
+        resultsPanel.setBackground(Theme.SIDEBAR_BG);
         resultsPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
 
         JScrollPane resultsScroll = scrollWrap(resultsPanel);
 
         // CardLayout to swap nav ↔ results
         JPanel switcher = new JPanel(new CardLayout());
-        switcher.setBackground(new Color(24, 28, 42));
+        switcher.setBackground(Theme.SIDEBAR_BG);
         switcher.add(navScroll,     "nav");
         switcher.add(resultsScroll, "results");
         CardLayout switchCards = (CardLayout) switcher.getLayout();
@@ -213,13 +220,13 @@ public class ChemApp extends JFrame {
             public void focusGained(FocusEvent e) {
                 if (search.getText().equals("Search calculators...")) {
                     search.setText("");
-                    search.setForeground(new Color(220, 225, 240));
+                    search.setForeground(Theme.SIDEBAR_TEXT);
                 }
             }
             public void focusLost(FocusEvent e) {
                 if (search.getText().isEmpty()) {
                     search.setText("Search calculators...");
-                    search.setForeground(new Color(130, 140, 165));
+                    search.setForeground(Theme.SIDEBAR_MUTED);
                     switchCards.show(switcher, "nav");
                 }
             }
@@ -249,7 +256,7 @@ public class ChemApp extends JFrame {
                 }
                 if (!any) {
                     JLabel none = new JLabel("No match for \"" + q + "\"");
-                    none.setForeground(new Color(140, 148, 168));
+                    none.setForeground(Theme.SIDEBAR_MUTED);
                     none.setFont(new Font("SansSerif", Font.ITALIC, 12));
                     none.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
                     resultsPanel.add(none);
@@ -270,7 +277,7 @@ public class ChemApp extends JFrame {
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setBorder(null);
-        sp.getViewport().setBackground(new Color(24, 28, 42));
+        sp.getViewport().setBackground(Theme.SIDEBAR_BG);
         return sp;
     }
 
@@ -286,7 +293,7 @@ public class ChemApp extends JFrame {
                               BiConsumer<String, Integer> nav) {
         JButton btn = new JButton(
             "<html><b>" + label + "</b><br>" +
-            "<font size='-2' color='#8899bb'>" + desc + "</font></html>");
+            "<font size='-2' color='#b0a088'>" + desc + "</font></html>");
         styleBtn(btn, 52);
         btn.setFont(new Font("SansSerif", Font.PLAIN, 12));
         btn.addActionListener(e -> nav.accept(key, tab));
@@ -298,20 +305,20 @@ public class ChemApp extends JFrame {
         btn.setMaximumSize(new Dimension(202, height));
         btn.setPreferredSize(new Dimension(202, height));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setBackground(new Color(36, 41, 60));
-        btn.setForeground(new Color(210, 215, 230));
+        btn.setBackground(Theme.SIDEBAR_BTN);
+        btn.setForeground(Theme.SIDEBAR_TEXT);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 6));
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(new Color(37, 99, 200));
+                btn.setBackground(Theme.ACCENT);
                 btn.setForeground(Color.WHITE);
             }
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(new Color(36, 41, 60));
-                btn.setForeground(new Color(210, 215, 230));
+                btn.setBackground(Theme.SIDEBAR_BTN);
+                btn.setForeground(Theme.SIDEBAR_TEXT);
             }
         });
     }
