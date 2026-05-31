@@ -19,6 +19,7 @@ public class RedoxPanel extends BaseCalcPanel {
         JTabbedPane tabs = new JTabbedPane();
         tabs.setFont(TAB_FONT);
         mainTabs = tabs;
+        tabs.addTab("Full Equation",            fullRedoxTab());
         tabs.addTab("Oxidation States",         oxStatesTab());
         tabs.addTab("Balance Half-Rxn (Acid)",  halfRxnTab(false));
         tabs.addTab("Balance Half-Rxn (Basic)", halfRxnTab(true));
@@ -26,6 +27,44 @@ public class RedoxPanel extends BaseCalcPanel {
         tabs.addTab("Galvanic Cell",            galvanicCellTab());
         tabs.addTab("Formal Charge",            formalChargeTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
+    }
+
+    // ── Full redox balance ────────────────────────────────────────────────────
+
+    private JPanel fullRedoxTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("Enter the skeleton equation with all species but NO H₂O, H⁺, or OH⁻ — the program adds them.<br>" +
+                   "State symbols (aq), (s), (g), (l) are stripped automatically. " +
+                   "Include ionic charges if needed (e.g. Fe2+, MnO4-, Cr2O7)."), g);
+        g.gridwidth = 1;
+
+        JTextField rxnF = addRow(p, g, 1, "Skeleton equation:");
+        rxnF.setFont(MONO_FONT);
+        rxnF.setPreferredSize(new Dimension(360, 28));
+
+        g.gridy = 2; g.gridx = 0; g.gridwidth = 2;
+        p.add(hint("Examples: &nbsp; <b>H2SO4 + HI -> I2 + SO2</b> &nbsp;|&nbsp; " +
+                "<b>MnO4- + Fe2+ -> Mn2+ + Fe3+</b> &nbsp;|&nbsp; <b>Cr2O7 + I- -> Cr3+ + I2</b>"), g);
+        g.gridwidth = 1;
+
+        String[] modes = {"Acidic solution  (adds H⁺ and H₂O)", "Basic solution  (adds OH⁻ and H₂O)"};
+        JComboBox<String> modeBox = new JComboBox<>(modes);
+        g.gridy = 3; g.gridwidth = 2; p.add(modeBox, g); g.gridwidth = 1;
+
+        JButton btn = calcButton("Balance");
+        btn.addActionListener(e -> {
+            String rxn = rxnF.getText().trim();
+            if (rxn.isEmpty()) { output("Enter a skeleton equation first."); return; }
+            try {
+                output(redox.balanceFullRedox(rxn, modeBox.getSelectedIndex() == 1));
+            } catch (Exception ex) { output("Error: " + ex.getMessage()); }
+        });
+        rxnF.addActionListener(e -> btn.doClick());
+        addCalcRow(p, g, 4, btn);
+        return p;
     }
 
     // ── Oxidation states ──────────────────────────────────────────────────────

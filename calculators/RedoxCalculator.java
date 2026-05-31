@@ -389,6 +389,307 @@ public class RedoxCalculator implements Calculator {
         }
     }
 
+    // ── Full redox equation balancer ────────────────────────────────────────
+
+    /**
+     * Balances a complete skeleton redox equation using the oxidation-number method.
+     *
+     * Input:  "H2SO4 + HI -> I2 + SO2"   (no H2O, H+, OH- or e-)
+     * State symbols (aq), (s), (g), (l) are stripped automatically.
+     * Returns a formatted multi-line result string for the GUI.
+     */
+    public String balanceFullRedox(String equation, boolean basic) {
+        // ── 1. Parse ─────────────────────────────────────────────────────────
+        String eq = equation.replace("→", "->").replace("⇌", "->").replace("=", "->");
+        String[] halves = eq.split("->", 2);
+        if (halves.length < 2) return "Error: use  ->  to separate reactants from products.";
+
+        List<String> rSp = parseSpeciesList(halves[0]);
+        List<String> pSp = parseSpeciesList(halves[1]);
+        if (rSp.isEmpty() || pSp.isEmpty()) return "Error: could not parse species.";
+
+        // ── 2. Oxidation states for each species ──────────────────────────────
+        Map<String, Map<String, Integer>> rOx = new LinkedHashMap<>();
+        Map<String, Map<String, Integer>> pOx = new LinkedHashMap<>();
+        for (String s : rSp) rOx.put(s, getOxStatesNumeric(cleanFormula(s), parseIonCharge(s)));
+        for (String s : pSp) pOx.put(s, getOxStatesNumeric(cleanFormula(s), parseIonCharge(s)));
+
+        // ── 3. Detect which element is oxidized / reduced ─────────────────────
+        Map<String, Integer> oxR = new LinkedHashMap<>(), oxP = new LinkedHashMap<>();
+        for (Map<String, Integer> m : rOx.values())
+            m.forEach((el, v) -> { if (!el.equals("H") && !el.equals("O")) oxR.putIfAbsent(el, v); });
+        for (Map<String, Integer> m : pOx.values())
+            m.forEach((el, v) -> { if (!el.equals("H") && !el.equals("O")) oxP.putIfAbsent(el, v); });
+
+        String redEl = null, oxEl = null;
+        int oxChange = 0, redChange = 0;
+        for (String el : oxR.keySet()) {
+            if (!oxP.containsKey(el)) continue;
+            int before = oxR.get(el), after = oxP.get(el);
+            if (after < before) { redEl = el; redChange = before - after; }  // gained e-
+            if (after > before) { oxEl  = el; oxChange  = after - before; }  // lost  e-
+        }
+        if (redEl == null || oxEl == null)
+            return "Could not detect an oxidation state change.\n" +
+                   "Ensure the equation has one oxidized and one reduced species.\n" +
+                   "Tip: include ionic charges if needed (e.g. Fe2+, MnO4-).";
+
+        final String RED_EL = redEl, OX_EL = oxEl;
+
+        // ── 4. Identify species containing each changed element ───────────────
+        String redReact = rSp.stream()
+            .filter(s -> atomCount(s, RED_EL) > 0).findFirst().orElse(null);
+        String redProd  = pSp.stream()
+            .filter(s -> atomCount(s, RED_EL) > 0).findFirst().orElse(null);
+        String oxReact  = rSp.stream()
+            .filter(s -> atomCount(s, OX_EL) > 0).findFirst().orElse(null);
+        String oxProd   = pSp.stream()
+            .filter(s -> atomCount(s, OX_EL) > 0).findFirst().orElse(null);
+
+        if (redReact == null || redProd == null || oxReact == null || oxProd == null)
+            return "Could not match all species to half-reactions.\n" +
+                   "Make sure both sides of the arrow contain species with the changed elements.";
+
+        // ── 5. Oxidation-number cross-multiplication ───────────────────────────
+        // e- per formula unit of each key species (using monatomic-ion-corrected counts)
+        int nRedR = atomCount(redReact, RED_EL);
+        int nRedP = atomCount(redProd,  RED_EL);
+        int nOxR  = atomCount(oxReact,  OX_EL);
+        int nOxP  = atomCount(oxProd,   OX_EL);
+
+        int ePerRedR = redChange * nRedR;   // e- gained per formula unit of reducing reactant
+        int ePerOxR  = oxChange  * nOxR;    // e- lost  per formula unit of oxidising reactant
+
+        long lcmE = lcm(ePerRedR, ePerOxR);
+        int cRedR = (int)(lcmE / ePerRedR); // coefficient of the reducing reactant
+        int cOxR  = (int)(lcmE / ePerOxR);  // coefficient of the oxidising reactant
+
+        // Products: scale to match the changed element count
+        int cRedP = cRedR * nRedR / nRedP;
+        int cOxP  = cOxR  * nOxR  / nOxP;
+
+        // ── 6. Remaining species get coefficient 1 (spectators) ───────────────
+        Map<String, Integer> coeffs = new LinkedHashMap<>();
+        for (String s : rSp) coeffs.put(s, 1);
+        for (String s : pSp) coeffs.put(s, 1);
+        coeffs.put(redReact, cRedR);
+        coeffs.put(redProd,  cRedP);
+        coeffs.put(oxReact,  cOxR);
+        coeffs.put(oxProd,   cOxP);
+
+        // ── 7. Count H, O on each side ────────────────────────────────────────
+        int hL = 0, oL = 0, hR = 0, oR = 0;
+        for (String s : rSp) {
+            int c = coeffs.getOrDefault(s, 1);
+            Map<String, Integer> comp = FormulaParser.parse(cleanFormula(s));
+            hL += c * comp.getOrDefault("H", 0);
+            oL += c * comp.getOrDefault("O", 0);
+        }
+        for (String s : pSp) {
+            int c = coeffs.getOrDefault(s, 1);
+            Map<String, Integer> comp = FormulaParser.parse(cleanFormula(s));
+            hR += c * comp.getOrDefault("H", 0);
+            oR += c * comp.getOrDefault("O", 0);
+        }
+
+        // ── 8. Balance O with H2O, then H with H+ or OH- ─────────────────────
+        int h2oL = 0, h2oR = 0, hpL = 0, hpR = 0, ohR = 0, ohL = 0;
+        int oDiff = oL - oR;
+        if (oDiff > 0) { h2oR = oDiff; hR += 2 * oDiff; }   // add H2O to RHS
+        if (oDiff < 0) { h2oL = -oDiff; hL += -2 * oDiff; } // add H2O to LHS
+
+        int hDiff = hL - hR;
+        if (!basic) {
+            if (hDiff > 0) hpR = hDiff;   // add H+ to RHS
+            else if (hDiff < 0) hpL = -hDiff;
+        } else {
+            // Basic: use OH- instead of H+
+            if (hDiff > 0) { ohR = hDiff; h2oL += hDiff; }   // OH- on RHS, H2O on LHS
+            if (hDiff < 0) { ohL = -hDiff; h2oR += -hDiff; } // OH- on LHS, H2O on RHS
+        }
+
+        // ── 9. Build output ───────────────────────────────────────────────────
+        StringBuilder lhs = new StringBuilder();
+        boolean firstL = true;
+        for (String s : rSp) {
+            if (!firstL) lhs.append(" + ");
+            int c = coeffs.getOrDefault(s, 1);
+            if (c != 1) lhs.append(c);
+            lhs.append(s.trim());
+            firstL = false;
+        }
+        if (h2oL > 0) lhs.append(" + ").append(h2oL == 1 ? "" : h2oL).append("H₂O");
+        if (hpL  > 0) lhs.append(" + ").append(hpL  == 1 ? "" : hpL ).append("H⁺");
+        if (ohL  > 0) lhs.append(" + ").append(ohL  == 1 ? "" : ohL ).append("OH⁻");
+
+        StringBuilder rhs = new StringBuilder();
+        boolean firstR = true;
+        for (String s : pSp) {
+            if (!firstR) rhs.append(" + ");
+            int c = coeffs.getOrDefault(s, 1);
+            if (c != 1) rhs.append(c);
+            rhs.append(s.trim());
+            firstR = false;
+        }
+        if (h2oR > 0) rhs.append(" + ").append(h2oR == 1 ? "" : h2oR).append("H₂O");
+        if (hpR  > 0) rhs.append(" + ").append(hpR  == 1 ? "" : hpR ).append("H⁺");
+        if (ohR  > 0) rhs.append(" + ").append(ohR  == 1 ? "" : ohR ).append("OH⁻");
+
+        String solution = basic ? "Basic" : "Acidic";
+
+        // sum of all integer coefficients (including H2O, H+/OH-)
+        int sumCoeffs = 0;
+        for (int c : coeffs.values()) sumCoeffs += c;
+        sumCoeffs += h2oL + h2oR + hpL + hpR + ohL + ohR;
+
+        return String.format(
+            "Full Redox Balance  (%s solution)\n" +
+            "────────────────────────────────────────────────────\n" +
+            "Changed elements:\n" +
+            "  %s  →  %s  (REDUCTION, gains %de⁻ per atom)\n" +
+            "  %s  →  %s  (OXIDATION, loses %de⁻ per atom)\n\n" +
+            "Electrons transferred:  %d e⁻  (LCM of %d and %d)\n\n" +
+            "Balanced equation:\n  %s  →  %s\n\n" +
+            "Sum of all coefficients:  %d",
+            solution,
+            RED_EL + "(" + oxR.get(RED_EL) + "→" + oxP.get(RED_EL) + ")", redEl, redChange,
+            OX_EL  + "(" + oxR.get(OX_EL)  + "→" + oxP.get(OX_EL)  + ")", oxEl,  oxChange,
+            (int) lcmE, ePerRedR, ePerOxR,
+            lhs, rhs,
+            sumCoeffs);
+    }
+
+    /** Numeric oxidation states. Returns a Map<element, oxState> for the given formula. */
+    public Map<String, Integer> getOxStatesNumeric(String formula, int netCharge) {
+        Map<String, Integer> comp = new LinkedHashMap<>(FormulaParser.parse(formula));
+
+        // FormulaParser reads "Fe2+" as {Fe:2} (treats "2" as a subscript).
+        // For simple monatomic ions (one element), when the count equals |charge|, it's the
+        // charge magnitude — fix the count to 1.
+        int chargeMag = Math.abs(netCharge);
+        if (chargeMag > 1 && comp.size() == 1) {
+            String el = comp.keySet().iterator().next();
+            if (comp.get(el) == chargeMag) comp.put(el, 1);
+        }
+        PeriodicTable pt = PeriodicTable.getInstance();
+        Map<String, Integer> result   = new LinkedHashMap<>();
+        Map<String, Integer> unknowns = new LinkedHashMap<>();
+
+        for (Map.Entry<String, Integer> entry : comp.entrySet()) {
+            String sym = entry.getKey();
+            Element el = pt.get(sym);
+            if (sym.equals("F"))                                          { result.put(sym, -1); continue; }
+            if (sym.equals("O"))                                          { result.put(sym, -2); continue; }
+            if (sym.equals("H"))                                          { result.put(sym, +1); continue; }
+            if (el != null && el.group == 1 && el.atomicNumber != 1)     { result.put(sym, +1); continue; }
+            if (el != null && el.group == 2)                             { result.put(sym, +2); continue; }
+            unknowns.put(sym, entry.getValue());
+        }
+
+        int fixedSum = result.entrySet().stream()
+                .mapToInt(e -> e.getValue() * comp.getOrDefault(e.getKey(), 0)).sum();
+
+        if (unknowns.size() == 1) {
+            Map.Entry<String, Integer> u = unknowns.entrySet().iterator().next();
+            result.put(u.getKey(), (netCharge - fixedSum) / u.getValue());
+        }
+        return result;
+    }
+
+    /**
+     * Split "H2SO4 + HI" or "MnO4- + Fe2+" into individual species.
+     * Splits on "+" only when surrounded by whitespace (so "Fe2+" is kept intact).
+     * Falls back to letter-adjacent "+" for compact input like "H2SO4+HI".
+     */
+    private List<String> parseSpeciesList(String side) {
+        // Replace separator "+" (has at least one space on either side) with a safe delimiter
+        String norm = side.trim()
+                .replaceAll("\\s+\\+\\s+", "|")           // "A + B" → "A|B"
+                .replaceAll("(?<=[A-Za-z0-9\\)\\]])\\+(?=[A-Za-z\\(])", "|"); // "HI+I2" → "HI|I2"
+        List<String> list = new ArrayList<>();
+        for (String tok : norm.split("\\|")) {
+            String t = tok.trim();
+            if (!t.isEmpty()) list.add(t);
+        }
+        return list;
+    }
+
+    /**
+     * Returns the true atom count for an element in a species string,
+     * applying the monatomic-ion correction (e.g. "Fe2+" → Fe count = 1, not 2).
+     */
+    private int atomCount(String species, String element) {
+        Map<String, Integer> comp = new LinkedHashMap<>(FormulaParser.parse(cleanFormula(species)));
+        int chargeMag = Math.abs(parseIonCharge(species));
+        if (chargeMag > 1 && comp.size() == 1) {
+            String el = comp.keySet().iterator().next();
+            if (comp.get(el) == chargeMag) comp.put(el, 1);
+        }
+        return comp.getOrDefault(element, 0);
+    }
+
+    /** Strip only state symbols — FormulaParser already skips charge signs like + and -. */
+    private String cleanFormula(String s) {
+        return s.replaceAll("\\(aq\\)|\\(s\\)|\\(g\\)|\\(l\\)", "").trim();
+    }
+
+    /**
+     * Parse ionic charge from a species string correctly for both:
+     *   "MnO4-"  → charge -1  (the "4" is an oxygen subscript, only "-" is the charge)
+     *   "Fe2+"   → charge +2  (single-element ion; "2" is the charge magnitude, not a subscript)
+     *   "Cr2O72-"→ charge -2
+     * Achieved by scanning the formula left-to-right to find where the formula ends,
+     * then parsing what remains as the charge string.
+     */
+    private int parseIonCharge(String s) {
+        String f = s.replaceAll("\\(aq\\)|\\(s\\)|\\(g\\)|\\(l\\)", "").replaceAll("\\^.*$", "").trim();
+        int n = f.length(), pos = 0, elementCount = 0, lastSubscript = 1;
+
+        while (pos < n) {
+            char c = f.charAt(pos);
+            if (Character.isUpperCase(c)) {
+                elementCount++;
+                pos++;
+                while (pos < n && Character.isLowerCase(f.charAt(pos))) pos++;
+                int subStart = pos;
+                while (pos < n && Character.isDigit(f.charAt(pos))) pos++;
+                String sub = f.substring(subStart, pos);
+                lastSubscript = sub.isEmpty() ? 1 : Integer.parseInt(sub);
+            } else if (c == '(' || c == '[') {
+                elementCount = 2;  // treat grouped formulas as multi-element
+                pos++;
+                int depth = 1;
+                while (pos < n && depth > 0) {
+                    char x = f.charAt(pos++);
+                    if (x == '(' || x == '[') depth++;
+                    else if (x == ')' || x == ']') depth--;
+                }
+                while (pos < n && Character.isDigit(f.charAt(pos))) pos++;
+            } else {
+                break;  // hit a non-formula character (start of charge)
+            }
+        }
+
+        String chargeStr = f.substring(pos).trim();
+        if (chargeStr.isEmpty()) return 0;
+
+        // Special case: single-element ion (e.g. "Fe2+") where the subscript IS the charge magnitude.
+        // FormulaParser consumes the "2" as subscript; we detect it here and return the real charge.
+        if (elementCount == 1 && lastSubscript > 1
+                && (chargeStr.equals("+") || chargeStr.equals("-"))) {
+            return (chargeStr.equals("+") ? 1 : -1) * lastSubscript;
+        }
+
+        // General case: chargeStr is "2-", "-", "+", "2+", etc.
+        int sign = chargeStr.endsWith("+") ? 1 : -1;
+        String magStr = chargeStr.substring(0, chargeStr.length() - 1).trim();
+        try {
+            return sign * (magStr.isEmpty() ? 1 : Integer.parseInt(magStr));
+        } catch (NumberFormatException e) {
+            return sign;
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private Map<String, Integer> atomsInSide(String side) {
@@ -407,7 +708,7 @@ public class RedoxCalculator implements Calculator {
             if (tok.isEmpty()) continue;
             // find trailing charge e.g. "^2+" or "2+" or "+" or "-"
             java.util.regex.Matcher m = java.util.regex.Pattern
-                    .compile("\\^?([0-9]*)([+-])$").matcher(tok);
+                    .compile("\\^?([0-9]*?)([+-])$").matcher(tok);
             if (m.find()) {
                 String numStr = m.group(1);
                 String sign   = m.group(2);
