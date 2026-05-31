@@ -147,6 +147,8 @@ public class SuggestPanel extends JPanel {
             "bonding domains|lone pairs|steric number|manual vsepr"},
         {"Reference Tables",
             "reference|table|constants|look up|ka value|ksp value|e° value|reduction potential table"},
+        {"Dissolution / Ion Count",
+            "ions|dissolution|how many moles of ions|complete dissolution|al2(so4)3|aluminiumsulfat|aluminum sulfate|opløsning|ioner dannes|moles of ions formed|komplet opløsning"},
     };
 
     private final BiConsumer<String, Integer> nav;
@@ -306,12 +308,10 @@ public class SuggestPanel extends JPanel {
             String desc  = ChemApp.ALL_CALCS[i][1];
             int score = 0;
 
-            // Base: label and description keywords (1 pt each word)
             for (String word : (label + " " + desc).toLowerCase().split("[^a-zA-Z0-9åæøÅÆØ]+")) {
                 if (word.length() > 3 && q.contains(word)) score += 1;
             }
 
-            // Extra keyword map (phrases score +3, single words +1)
             String[] kRow = keywordsFor(label);
             if (kRow != null) {
                 for (String kw : kRow) {
@@ -323,45 +323,141 @@ public class SuggestPanel extends JPanel {
 
             if (score > 0) scores.add(new int[]{i, score});
         }
-
         scores.sort((a, b) -> b[1] - a[1]);
-        int maxScore = scores.isEmpty() ? 1 : Math.max(1, scores.get(0)[1]);
+        int maxCalcScore = scores.isEmpty() ? 1 : Math.max(1, scores.get(0)[1]);
 
-        // Render top results
+        // Score facts
+        List<int[]> factScores = FactsPanel.scoreFacts(questionText);
+        int maxFactScore = factScores.isEmpty() ? 1 : Math.max(1, factScores.get(0)[1]);
+
+        // Render
         resultsPanel.removeAll();
 
-        if (scores.isEmpty()) {
+        boolean anyResult = !scores.isEmpty() || !factScores.isEmpty();
+        if (!anyResult) {
             JLabel none = new JLabel("No strong matches found. Try more specific chemistry vocabulary.");
             none.setFont(new Font("SansSerif", Font.ITALIC, 13));
             none.setForeground(new Color(130, 135, 150));
             none.setBorder(BorderFactory.createEmptyBorder(10, 4, 10, 4));
             resultsPanel.add(none);
         } else {
-            JLabel hdr = new JLabel("Top matches  (" + Math.min(scores.size(), 7) + " of " + scores.size() + " calculators scored above zero)");
-            hdr.setFont(new Font("SansSerif", Font.BOLD, 12));
-            hdr.setForeground(new Color(100, 108, 140));
-            hdr.setBorder(BorderFactory.createEmptyBorder(4, 2, 8, 0));
-            hdr.setAlignmentX(Component.LEFT_ALIGNMENT);
-            resultsPanel.add(hdr);
+            // ── Calculator results ──────────────────────────────────────────
+            if (!scores.isEmpty()) {
+                JLabel hdr = new JLabel("Calculators  (" + Math.min(scores.size(), 5) + " of " + scores.size() + " matched)");
+                hdr.setFont(new Font("SansSerif", Font.BOLD, 12));
+                hdr.setForeground(new Color(100, 108, 140));
+                hdr.setBorder(BorderFactory.createEmptyBorder(4, 2, 8, 0));
+                hdr.setAlignmentX(Component.LEFT_ALIGNMENT);
+                resultsPanel.add(hdr);
 
-            int shown = 0;
-            for (int[] pair : scores) {
-                if (shown >= 7) break;
-                int idx   = pair[0];
-                int sc    = pair[1];
-                String label   = ChemApp.ALL_CALCS[idx][0];
-                String desc    = ChemApp.ALL_CALCS[idx][1];
-                String panelKey = ChemApp.ALL_CALCS[idx][2];
-                int tabIdx     = Integer.parseInt(ChemApp.ALL_CALCS[idx][3]);
-                int pct = (int) Math.round(100.0 * sc / maxScore);
-                resultsPanel.add(resultCard(shown + 1, label, desc, pct, panelKey, tabIdx));
+                int shown = 0;
+                for (int[] pair : scores) {
+                    if (shown >= 5) break;
+                    int idx      = pair[0];
+                    int sc       = pair[1];
+                    String label    = ChemApp.ALL_CALCS[idx][0];
+                    String desc     = ChemApp.ALL_CALCS[idx][1];
+                    String panelKey = ChemApp.ALL_CALCS[idx][2];
+                    int tabIdx      = Integer.parseInt(ChemApp.ALL_CALCS[idx][3]);
+                    int pct = (int) Math.round(100.0 * sc / maxCalcScore);
+                    resultsPanel.add(resultCard(shown + 1, label, desc, pct, panelKey, tabIdx));
+                    resultsPanel.add(Box.createVerticalStrut(8));
+                    shown++;
+                }
+            }
+
+            // ── Facts / Conceptual results ──────────────────────────────────
+            if (!factScores.isEmpty()) {
+                int showFacts = Math.min(factScores.size(), 4);
                 resultsPanel.add(Box.createVerticalStrut(8));
-                shown++;
+                JLabel fhdr = new JLabel("Conceptual Facts  (" + showFacts + " of " + factScores.size() + " matched)");
+                fhdr.setFont(new Font("SansSerif", Font.BOLD, 12));
+                fhdr.setForeground(new Color(100, 108, 140));
+                fhdr.setBorder(BorderFactory.createEmptyBorder(4, 2, 8, 0));
+                fhdr.setAlignmentX(Component.LEFT_ALIGNMENT);
+                resultsPanel.add(fhdr);
+
+                for (int fi = 0; fi < showFacts; fi++) {
+                    int factIdx = factScores.get(fi)[0];
+                    int sc      = factScores.get(fi)[1];
+                    String[] fact = FactsPanel.FACTS[factIdx];
+                    int pct = (int) Math.round(100.0 * sc / maxFactScore);
+                    resultsPanel.add(factResultCard(fi + 1, fact, pct));
+                    resultsPanel.add(Box.createVerticalStrut(8));
+                }
             }
         }
 
         resultsPanel.revalidate();
         resultsPanel.repaint();
+    }
+
+    private JPanel factResultCard(int rank, String[] fact, int pct) {
+        JPanel card = new JPanel(new BorderLayout(12, 4));
+        card.setBackground(new Color(250, 252, 255));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(167, 243, 208), 1, true),
+            BorderFactory.createEmptyBorder(10, 14, 10, 14)));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+
+        JLabel rankLbl = new JLabel("#" + rank);
+        rankLbl.setFont(new Font("SansSerif", Font.BOLD, 16));
+        rankLbl.setForeground(new Color(6, 95, 70));
+        rankLbl.setPreferredSize(new Dimension(32, 40));
+        rankLbl.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel centre = new JPanel();
+        centre.setLayout(new BoxLayout(centre, BoxLayout.Y_AXIS));
+        centre.setBackground(new Color(250, 252, 255));
+
+        JLabel topicLbl = new JLabel("FACT  ·  " + fact[0]);
+        topicLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
+        topicLbl.setForeground(new Color(6, 95, 70));
+        topicLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel titleLbl = new JLabel("<html><b>" + fact[1] + "</b></html>");
+        titleLbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        titleLbl.setForeground(HEADING);
+        titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel ansLbl = new JLabel("<html><i>" + fact[2] + "</i></html>");
+        ansLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        ansLbl.setForeground(new Color(6, 95, 70));
+        ansLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        centre.add(topicLbl);
+        centre.add(Box.createVerticalStrut(2));
+        centre.add(titleLbl);
+        centre.add(Box.createVerticalStrut(2));
+        centre.add(ansLbl);
+
+        JPanel right = new JPanel(new BorderLayout());
+        right.setBackground(new Color(250, 252, 255));
+        JLabel scoreLbl = new JLabel(pct + "%");
+        scoreLbl.setFont(new Font("SansSerif", Font.BOLD, 12));
+        scoreLbl.setForeground(new Color(6, 95, 70));
+        scoreLbl.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        JButton openBtn = new JButton("Facts →");
+        openBtn.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        openBtn.setBackground(new Color(209, 250, 229));
+        openBtn.setForeground(new Color(6, 95, 70));
+        openBtn.setBorderPainted(false);
+        openBtn.setFocusPainted(false);
+        openBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        openBtn.addActionListener(e -> nav.accept("facts", -1));
+
+        right.add(scoreLbl, BorderLayout.NORTH);
+        right.add(openBtn,  BorderLayout.SOUTH);
+
+        card.add(rankLbl, BorderLayout.WEST);
+        card.add(centre,  BorderLayout.CENTER);
+        card.add(right,   BorderLayout.EAST);
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent e) { nav.accept("facts", -1); }
+        });
+        return card;
     }
 
     private String[] keywordsFor(String label) {

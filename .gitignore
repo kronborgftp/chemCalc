@@ -13,3 +13,6 @@ out/
 
 # Claude Code
 .claude/
+
+# Claude memory
+memory/

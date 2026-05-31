@@ -32,6 +32,7 @@ public class StoichiometryPanel extends BaseCalcPanel {
         tabs.addTab("Electron Config",  electronConfigTab());
         tabs.addTab("Photon Energy",    photonEnergyTab());
         tabs.addTab("Unit Cell",        crystalUnitCellTab());
+        tabs.addTab("Dissolution",      dissolutionTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -627,6 +628,79 @@ public class StoichiometryPanel extends BaseCalcPanel {
                         area, parse(thkF), thkCm, vol, vol, a3, nCells));
                 }
             }
+        });
+        return p;
+    }
+
+    // ── Dissolution / Ion Count ───────────────────────────────────────────────
+
+    private JPanel dissolutionTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("Al₂(SO₄)₃ → 2 Al³⁺ + 3 SO₄²⁻  =  5 mol ions per mol compound"), g);
+        g.gridwidth = 1;
+
+        g.gridy = 1; g.gridwidth = 2;
+        p.add(new JLabel("<html><b>Enter each ion produced upon complete dissolution:</b></html>"), g);
+        g.gridwidth = 1;
+
+        JSpinner nIons = new JSpinner(new SpinnerNumberModel(2, 1, 8, 1));
+        g.gridy = 2;
+        p.add(new JLabel("Number of distinct ion types:"), g);
+        g.gridx = 1; p.add(nIons, g); g.gridx = 0;
+
+        JPanel ionGrid = new JPanel(new GridBagLayout());
+        ionGrid.setBackground(p.getBackground());
+        GridBagConstraints ig = new GridBagConstraints();
+        ig.insets = new Insets(3, 6, 3, 6);
+        ig.fill   = GridBagConstraints.HORIZONTAL;
+
+        ig.gridy = 0;
+        ig.gridx = 0; ionGrid.add(new JLabel("Ion formula"), ig);
+        ig.gridx = 1; ionGrid.add(new JLabel("Coefficient"), ig);
+
+        int MAX = 8;
+        JTextField[] ionF  = new JTextField[MAX];
+        JSpinner[]   coeff = new JSpinner[MAX];
+        for (int i = 0; i < MAX; i++) {
+            ig.gridy = i + 1;
+            ionF[i]  = new JTextField(8);
+            coeff[i] = new JSpinner(new SpinnerNumberModel(1, 1, 20, 1));
+            ig.gridx = 0; ionGrid.add(ionF[i],  ig);
+            ig.gridx = 1; ionGrid.add(coeff[i], ig);
+        }
+
+        g.gridy = 3; g.gridwidth = 2; p.add(ionGrid, g); g.gridwidth = 1;
+
+        nIons.addChangeListener(e -> {
+            int n = (int) nIons.getValue();
+            for (int i = 0; i < MAX; i++) {
+                ionF[i].setVisible(i < n);
+                coeff[i].setVisible(i < n);
+            }
+            ionGrid.revalidate();
+        });
+        // trigger initial visibility
+        int init = (int) nIons.getValue();
+        for (int i = 0; i < MAX; i++) { ionF[i].setVisible(i < init); coeff[i].setVisible(i < init); }
+
+        calcBtn(p, g, 4, "Count Ions", () -> {
+            int n = (int) nIons.getValue();
+            StringBuilder sb = new StringBuilder("Dissolution  —  Ion Count\n" + "─".repeat(40) + "\n");
+            int total = 0;
+            for (int i = 0; i < n; i++) {
+                String formula = ionF[i].getText().trim();
+                int c = (int) coeff[i].getValue();
+                if (formula.isEmpty()) formula = "(ion " + (i + 1) + ")";
+                sb.append(String.format("  %d  ×  %s%n", c, formula));
+                total += c;
+            }
+            sb.append("─".repeat(40)).append("\n");
+            sb.append(String.format("Total ions per formula unit = %d%n", total));
+            sb.append(String.format("%nFor 1 mol compound → %.0f mol ions%n", (double) total));
+            output(sb.toString());
         });
         return p;
     }

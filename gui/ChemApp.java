@@ -73,6 +73,7 @@ public class ChemApp extends JFrame {
         {"Electron Configuration",   "Write e⁻ config and find valence electrons",               "stoich",   "9"},
         {"Photon Energy",            "E = hc/λ — wavelength, frequency, energy per mole",        "stoich",  "10"},
         {"Unit Cell / Crystal",      "ρ = Z·M/(NA·a³) — density, lattice param, # unit cells",  "stoich",  "11"},
+        {"Dissolution / Ion Count",  "Count moles of ions from complete dissolution of a salt",  "stoich",  "12"},
         {"VSEPR from Formula",       "Auto-detect central atom, lone pairs, geometry, polarity", "vsepr",    "0"},
         {"VSEPR Manual",             "Enter bonding domains and lone pairs → geometry",           "vsepr",    "1"},
         {"VSEPR Reference Table",    "All BP/LP combos: geometry, bond angle, planar?",          "vsepr",    "2"},
@@ -109,6 +110,7 @@ public class ChemApp extends JFrame {
 
         content.add(new HomePanel(nav),    "home");
         content.add(new SuggestPanel(nav), "suggest");
+        content.add(new FactsPanel(nav),   "facts");
         register(new EquationBalancerPanel(), "eq");
         register(new PHPanel(),               "ph");
         register(new RedoxPanel(),            "redox");
@@ -171,6 +173,7 @@ public class ChemApp extends JFrame {
         String[][] items = {
             {"Home",             "home"},
             {"Smart Suggest",    "suggest"},
+            {"Chemistry Facts",  "facts"},
             {"Equation Balancer","eq"},
             {"pH / Acid-Base",   "ph"},
             {"Redox",            "redox"},
