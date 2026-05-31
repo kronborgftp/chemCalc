@@ -234,7 +234,8 @@ public class EquilibriumPanel extends BaseCalcPanel {
         JPanel p = tabPanel();
         GridBagConstraints g = gbc();
         g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
-        p.add(hint("MₘXₙ → m·M^(n+) + n·X^(m−) &nbsp; Ksp = mᵐ · nⁿ · s^(m+n)"), g);
+        p.add(hint("MₘXₙ → m·M^(n+) + n·X^(m−) &nbsp; Ksp = mᵐ · nⁿ · s^(m+n)<br>" +
+                   "AgCl (m=1, n=1): s = √Ksp &nbsp;|&nbsp; Cu(OH)₂ (m=1, n=2): Ksp = 4s³ &nbsp;|&nbsp; Pb(IO₃)₂ (m=1, n=2) same form"), g);
         g.gridwidth = 1;
 
         String[] modes = {"Ksp → molar solubility s", "s → Ksp"};

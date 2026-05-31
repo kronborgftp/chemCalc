@@ -189,7 +189,9 @@ public class PHPanel extends BaseCalcPanel {
         GridBagConstraints g = gbc();
 
         g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
-        p.add(hint("Strong base: HA + OH⁻ → A⁻ + H₂O  |  Strong acid: A⁻ + H⁺ → HA  |  Uses mol ratios — volumes cancel"), g);
+        p.add(hint("Strong base converts HA → A⁻  |  Strong acid converts A⁻ → HA  |  Uses mol counts — volume cancels in ratio.<br>" +
+                   "<b>Example (exam):</b> 1 mol NH₃ + 1 mol NH₄Cl in 1 L → take 500 mL → add 30 mL of 1 M NaOH<br>" +
+                   "→ mol NH₃ = 0.5, mol NH₄Cl = 0.5, Kb = 1.80×10⁻⁵ → select Kb mode, add Strong Base, enter vol=30, conc=1 → pH ≈ 9.31"), g);
         g.gridwidth = 1;
 
         String[] kModes = {"Ka of weak acid (direct)", "Kb of weak base (Ka = Kw/Kb)"};

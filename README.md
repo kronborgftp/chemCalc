@@ -50,6 +50,7 @@ Balance any chemical equation using Gaussian elimination (exact rational arithme
 ### Redox
 | Tab | What it solves |
 |-----|---------------|
+| Full Redox Balance | Paste full skeleton equation → auto-detects changed elements, balances by oxidation-number method, adds H₂O + H⁺/OH⁻ |
 | Oxidation States | Assign ox. states from formula and net charge |
 | Balance Half-Rxn (Acid) | Auto-adds H₂O, H⁺, e⁻ in acidic solution |
 | Balance Half-Rxn (Base) | Converts to OH⁻/H₂O in basic solution |

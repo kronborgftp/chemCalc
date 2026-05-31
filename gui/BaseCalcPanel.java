@@ -51,6 +51,9 @@ public abstract class BaseCalcPanel extends JPanel {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         inputScroll.setBorder(null);
         inputScroll.getViewport().setBackground(CARD_BG);
+        // Prevent the scroll pane from stealing keyboard focus (macOS clipboard fix)
+        inputScroll.setFocusable(false);
+        inputScroll.getViewport().setFocusable(false);
 
         // ── Output panel (bottom) ─────────────────────────────────────────────
         outputArea = new JTextArea(9, 50);
@@ -116,7 +119,30 @@ public abstract class BaseCalcPanel extends JPanel {
         tf.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 202, 215), 1, true),
                 BorderFactory.createEmptyBorder(3, 6, 3, 6)));
+        attachPasteMenu(tf);
         return tf;
+    }
+
+    /** Attaches a right-click context menu with Paste / Clear to any text field. */
+    protected static void attachPasteMenu(javax.swing.text.JTextComponent tc) {
+        JPopupMenu menu = new JPopupMenu();
+
+        JMenuItem pasteItem = new JMenuItem("Paste");
+        pasteItem.addActionListener(e -> {
+            try {
+                java.awt.datatransfer.Clipboard cb =
+                        java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
+                String text = (String) cb.getData(java.awt.datatransfer.DataFlavor.stringFlavor);
+                if (text != null) tc.replaceSelection(text.trim());
+            } catch (Exception ignored) {}
+        });
+
+        JMenuItem clearItem = new JMenuItem("Clear");
+        clearItem.addActionListener(e -> tc.setText(""));
+
+        menu.add(pasteItem);
+        menu.add(clearItem);
+        tc.setComponentPopupMenu(menu);
     }
 
     protected JTextField monoField() {

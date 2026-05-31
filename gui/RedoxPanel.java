@@ -36,18 +36,22 @@ public class RedoxPanel extends BaseCalcPanel {
         GridBagConstraints g = gbc();
 
         g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
-        p.add(hint("Enter the skeleton equation with all species but NO H₂O, H⁺, or OH⁻ — the program adds them.<br>" +
-                   "State symbols (aq), (s), (g), (l) are stripped automatically. " +
-                   "Include ionic charges if needed (e.g. Fe2+, MnO4-, Cr2O7)."), g);
+        p.add(hint("Enter the skeleton equation with ALL key species but NO H₂O, H⁺, or OH⁻ — the balancer adds them automatically.<br>" +
+                   "State symbols (aq), (s), (g), (l) are stripped. Include ionic charges where relevant (e.g. Fe2+, MnO4-).<br>" +
+                   "Use spaces around + between species: <b>MnO4- + Fe2+</b> not <b>MnO4-+Fe2+</b>."), g);
         g.gridwidth = 1;
 
         JTextField rxnF = addRow(p, g, 1, "Skeleton equation:");
         rxnF.setFont(MONO_FONT);
-        rxnF.setPreferredSize(new Dimension(360, 28));
+        rxnF.setPreferredSize(new Dimension(380, 28));
 
         g.gridy = 2; g.gridx = 0; g.gridwidth = 2;
-        p.add(hint("Examples: &nbsp; <b>H2SO4 + HI -> I2 + SO2</b> &nbsp;|&nbsp; " +
-                "<b>MnO4- + Fe2+ -> Mn2+ + Fe3+</b> &nbsp;|&nbsp; <b>Cr2O7 + I- -> Cr3+ + I2</b>"), g);
+        p.add(hint("<b>Examples (acidic):</b><br>" +
+                "&nbsp; H2SO4 + HI -> I2 + SO2 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (sum = 7)<br>" +
+                "&nbsp; MnO4- + Fe2+ -> Mn2+ + Fe3+ &nbsp;&nbsp; (1 MnO4⁻ : 5 Fe²⁺)<br>" +
+                "&nbsp; Cr2O7 + I- -> Cr3+ + I2<br>" +
+                "<b>Examples (basic):</b><br>" +
+                "&nbsp; MnO4- + C2O4 -> MnO2 + CO2"), g);
         g.gridwidth = 1;
 
         String[] modes = {"Acidic solution  (adds H⁺ and H₂O)", "Basic solution  (adds OH⁻ and H₂O)"};

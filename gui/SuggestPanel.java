@@ -45,6 +45,8 @@ public class SuggestPanel extends JPanel {
             "neutralisation|neutralization|neutralisere|titration|equivalence point|ml of|strong acid and strong base|mixing|blandede"},
         {"Buffer + Titrant",
             "buffer solution was prepared|buffer was prepared|added to the buffer|resulting ph|tilsættes buffer|naoh was added|hcl was added|ml of naoh|ml of hcl|buffer after adding|30.0 ml"},
+        {"Full Redox Balance",
+            "balance the following reaction|afstem følgende reaktion|oxidation of|sum of coefficients|summen af koefficienterne|h2so4 + hi|mno4|fe2+|fe3+|cr2o7|balance full|full equation|skeleton equation|oxidises|oxidized|reduced|hvad er summen"},
         {"Oxidation States",
             "oxidation state|oxidation number|oxidationstallet|assign oxidation|svovl i svovlsyre|sulfur in h2so4|ox. state"},
         {"Balance Half-Rxn (Acid)",
