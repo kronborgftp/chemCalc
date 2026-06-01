@@ -32,6 +32,7 @@ public class FactsPanel extends JPanel {
     private JPanel     resultsPanel;
     private JTextField searchField;
     private JPanel     filterPanel;
+    private JPanel     topBar;          // field so the resize listener can reach it
     private String     activeFilter = "All";
 
     private final CardLayout centerCards = new CardLayout();
@@ -98,9 +99,16 @@ public class FactsPanel extends JPanel {
         searchRow.add(clearBtn,                BorderLayout.EAST);
         listControls.add(searchRow);
 
-        filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        filterPanel = new JPanel(new WrapLayout(FlowLayout.LEFT, 8, 4));
         filterPanel.setBackground(BG);
         filterPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 8, 16));
+        // When the window is resized and buttons wrap onto a new row, the top
+        // bar must revalidate so its preferred height grows to fit all rows.
+        filterPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override public void componentResized(java.awt.event.ComponentEvent e) {
+                if (topBar != null) topBar.revalidate();
+            }
+        });
 
         List<String> topics = new ArrayList<>();
         topics.add("All");
@@ -133,7 +141,7 @@ public class FactsPanel extends JPanel {
         controlPanel.add(detailNav,    "detail");
         controlCards.show(controlPanel, "list");
 
-        JPanel topBar = new JPanel(new BorderLayout());
+        topBar = new JPanel(new BorderLayout());
         topBar.add(hero,         BorderLayout.NORTH);
         topBar.add(controlPanel, BorderLayout.CENTER);
         add(topBar, BorderLayout.NORTH);

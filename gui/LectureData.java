@@ -381,6 +381,76 @@ public class LectureData {
          + "<br>[H⁺] = √(Ka·C) = √(2.0×10⁻⁵ × 0.10) = 1.41×10⁻³ M → pH = 2.85"
          + "<br><br>For the ICE table: if x/C &lt; 5%, the approximation is valid; otherwise solve the quadratic x² + Ka·x − Ka·C = 0."),
 
+        new Note("lec2.ionic",
+         "Lecture 2 — Aqueous Reactions & Ions (Ch. 4)",
+         "Ionic Nomenclature & Formula Building",
+         "<b>Naming ionic compounds:</b> cation name first, then anion name. The formula is determined by charge balance."
+         + "<br><br><b>Rule:</b> choose the ratio of ions that makes the total charge = 0."
+         + "<br>&nbsp;&nbsp;If cation charge = +m and anion charge = −n, you need n cations and m anions."
+         + "<br>&nbsp;&nbsp;Simplify by dividing by GCD."
+         + "<br><br><b>Examples:</b>"
+         + "<ul>"
+         + "<li>Ammonium nitrate: NH₄⁺ (+1) + NO₃⁻ (−1) → ratio 1:1 → <b>NH₄NO₃</b></li>"
+         + "<li>Ammonium hydrogen phosphate: NH₄⁺ (+1) + HPO₄²⁻ (−2) → ratio 2:1 → <b>(NH₄)₂HPO₄</b></li>"
+         + "<li>Calcium phosphate: Ca²⁺ (+2) + PO₄³⁻ (−3) → ratio 3:2 → <b>Ca₃(PO₄)₂</b></li>"
+         + "<li>Aluminium sulfate: Al³⁺ (+3) + SO₄²⁻ (−2) → ratio 2:3 → <b>Al₂(SO₄)₃</b></li>"
+         + "</ul>"
+         + "<b>Polyatomic ion parentheses:</b> if you need more than one polyatomic ion, wrap it in parentheses. "
+         + "E.g. 2 × SO₄²⁻ → (SO₄)₂, but 1 × SO₄²⁻ → SO₄ (no parentheses needed)."),
+
+        new Note("lec2.avogadro",
+         "Lecture 2 — Gases & Avogadro's Law (Ch. 9)",
+         "Avogadro's Law & Ideal Gases",
+         "<b>Avogadro's law:</b> equal volumes of ideal gases at the same temperature and pressure contain equal numbers of molecules."
+         + "<br>&nbsp;&nbsp;&nbsp;&nbsp;V ∝ n  (at constant T and P)"
+         + "<br><br><b>Consequence:</b> if three 2 L flasks contain H₂, O₂, and He at the same T and P, they all contain the same number of moles — and therefore the same number of molecules."
+         + "<br><br><b>Density differs</b> because mass = n × M, and M differs: M(H₂)=2, M(O₂)=32, M(He)=4."
+         + "<br><br><b>Average kinetic energy is the same</b> at the same T (½mv² = (3/2)kT), but average speed differs: lighter molecules move faster."
+         + "<br><br><b>Ideal gas law summary:</b> PV = nRT &nbsp; (R = 8.314 J·mol⁻¹·K⁻¹ = 0.08206 L·atm·mol⁻¹·K⁻¹)"),
+
+        new Note("lec7.kinetics_temp",
+         "Lecture 7 — Chemical Kinetics (Ch. 12)",
+         "Why Reactions Are Faster at Higher Temperature",
+         "<b>Two correct reasons:</b>"
+         + "<ol>"
+         + "<li><b>The rate constant k increases with T</b> — described by the Arrhenius equation: k = A·exp(−Eₐ/RT). Higher T → larger k → faster reaction.</li>"
+         + "<li><b>The average molecular speed (kinetic energy) increases with T</b> — more molecules exceed the activation energy barrier at any given moment.</li>"
+         + "</ol>"
+         + "<b>Common misconception:</b> the activation energy Eₐ does NOT change with temperature. Eₐ is a fixed property of the reaction pathway."
+         + "<br><br><b>Exam tip (Spring 2024 Q18):</b> the correct statements are (II) and (III) only. Statement (I) — 'Eₐ increases with T' — is <b>wrong</b>. The activation energy is a fixed barrier; T affects how many molecules have enough energy to overcome it, not the height of the barrier itself."),
+
+        new Note("lec7.equilibrium_K",
+         "Lecture 7 — Chemical Equilibrium (Ch. 13)",
+         "The Equilibrium Constant K and Temperature",
+         "<b>K depends ONLY on temperature.</b>"
+         + "<br><br><b>What does NOT change K:</b>"
+         + "<ul>"
+         + "<li>Adding or removing reactants or products — these change Q and shift equilibrium, but K stays fixed.</li>"
+         + "<li>Adding a catalyst — speeds up reaching equilibrium, but K is unchanged.</li>"
+         + "<li>Changing pressure or volume (for gas-phase reactions) — shifts equilibrium position but not K.</li>"
+         + "</ul>"
+         + "<b>What DOES change K:</b>"
+         + "<ul>"
+         + "<li><b>Changing temperature</b> — K is a thermodynamic quantity: ΔG° = −RT·ln K. Since ΔG° changes with T, so does K.</li>"
+         + "<li>For exothermic reactions: raising T decreases K (less product favoured).</li>"
+         + "<li>For endothermic reactions: raising T increases K (more product favoured).</li>"
+         + "</ul>"),
+
+        new Note("lec4.group_trends",
+         "Lecture 4 — Periodic Trends (Ch. 6)",
+         "Trends Down a Group in the Periodic Table",
+         "<b>Going DOWN a group (increasing period):</b>"
+         + "<ul>"
+         + "<li>Atomic radius <b>increases</b> — additional electron shells added.</li>"
+         + "<li>Ionic radius <b>increases</b> — same trend as atomic radius.</li>"
+         + "<li>Molar mass <b>increases</b> — more protons and neutrons.</li>"
+         + "<li>First ionization energy <b>decreases</b> — valence electrons farther from nucleus, more shielded → easier to remove.</li>"
+         + "<li>Electronegativity <b>decreases</b> — lower tendency to attract bonding electrons.</li>"
+         + "</ul>"
+         + "<b>For Group 2 (Be, Mg, Ca, Sr, Ba):</b>"
+         + "<br>Going down: atomic radius ↑, ionic radius ↑, molar mass ↑, IE₁ <b>↓</b>."
+         + "<br><br><b>Exam tip (May 2024 Q20):</b> 'all of the following increase except' — the exception is the <b>first ionization energy</b>, which DECREASES going down a group because valence electrons are further from the nucleus."),
+
         new Note("lec10.buffer",
          "Lecture 10 — Acids, Bases & Solubility (Ch. 14+15)",
          "Buffers & Henderson-Hasselbalch",
@@ -468,6 +538,26 @@ public class LectureData {
         new ExamQ("lec10.buffer", "Spring 2025",
             "A buffer was prepared with 1.00 mol NH₃ (Kb=1.80×10⁻⁵) and 1.00 mol NH₄Cl in 1.00 L. 30.0 mL of 1.00 M NaOH was added to 500 mL of this buffer. What is the resulting pH?",
             "pH ≈ 9.31. pKa(NH₄⁺) = 9.26. NaOH converts 0.030 mol NH₄⁺ → NH₃. Apply Henderson-Hasselbalch with updated concentrations."),
+
+        // ── May 2024 exam ─────────────────────────────────────────────────────
+        new ExamQ("lec2.ionic", "May 2024",
+            "What is the chemical formula for ammonium nitrate?",
+            "NH₄NO₃ — ammonium (NH₄⁺, charge +1) + nitrate (NO₃⁻, charge −1) → ratio 1:1 → NH₄NO₃."),
+        new ExamQ("lec2.ionic", "May 2024",
+            "What is the mass of 1 mmol of ammonium hydrogen phosphate?",
+            "0.132 g — formula (NH₄)₂HPO₄: M = 2×18 + 1 + 31 + 4×16 = 132 g/mol; 1 mmol = 0.001 mol × 132 g/mol = 0.132 g."),
+        new ExamQ("lec2.avogadro", "May 2024",
+            "Three 2 L flasks are filled with H₂, O₂, and He at T=25°C and P=1 bar. Which statement is correct?",
+            "The number of O₂ molecules in one flask equals the number of He atoms in the other — by Avogadro's law, equal V, T, P → equal n → equal number of particles."),
+        new ExamQ("lec7.equilibrium_K", "May 2024",
+            "Consider a chemical reaction and its equilibrium constant K. Which statement is correct?",
+            "K changes if the temperature changes. K does NOT change when concentrations, pressure, or a catalyst changes."),
+        new ExamQ("lec7.kinetics_temp", "May 2024",
+            "Most reactions are faster at higher T. This is due to: (I) increase in Eₐ, (II) increase in k, (III) increase in average molecular speed.",
+            "Only (II) and (III). Eₐ is a fixed property of the reaction — it does NOT increase with T. Higher T increases k (Arrhenius) and gives more molecules enough kinetic energy to react."),
+        new ExamQ("lec4.group_trends", "May 2024",
+            "For main group 2 elements, all of the following increase going down the group EXCEPT:",
+            "The first ionization energy DECREASES going down group 2. Atomic radius, ionic radius, and molar mass all increase."),
     };
 
     // ── Facts (model data — previously lived in FactsPanel) ───────────────────
@@ -601,6 +691,26 @@ public class LectureData {
             "mass% = (n x M_element / M_compound) x 100",
             "Example: mass% of Li in LiFePO4 (M ≈ 157.76 g/mol): (1 x 6.941 / 157.76) x 100 = 4.4%.",
             "mass percentage|mass percent|masseprocent|lithium|LiFePO4|percent composition|masseprocenten", ""),
+        new Fact("Stoichiometry","Ionic nomenclature: formula from ion names",
+            "Ratio = cation count : anion count such that total charge = 0. E.g. NH₄NO₃, (NH₄)₂HPO₄, Ca₃(PO₄)₂.",
+            "Cation charge = +m, anion charge = −n → use n cations and m anions (divide by GCD). Polyatomic ions with count > 1 need parentheses: (NH₄)₂, (SO₄)₃.",
+            "chemical formula|ionic compound|ammonium nitrate|ammonium|nitrate|sulfate|formula for|ionic formula|kemiske formel|ionisk|nomenklatur|nomenclature", "lec2.ionic"),
+        new Fact("Gases","Avogadro's law: equal volumes of gases at same T and P",
+            "Equal volumes at same T and P contain equal numbers of molecules (same moles).",
+            "At constant T and P, n₁/V₁ = n₂/V₂. So two 2 L flasks at same T and P have the same n — and the same number of molecules — regardless of the gas identity. Density still differs because M differs.",
+            "avogadro|equal volumes|same number|molecules|flasks|H2 O2 He|ideal gas|same temperature pressure|antal molekyler|identisk antal", "lec2.avogadro"),
+        new Fact("Equilibrium","What changes the equilibrium constant K?",
+            "Only temperature changes K. Concentration, pressure, volume, and catalysts do NOT change K.",
+            "K is a thermodynamic constant: ΔG° = −RT·ln K. Since ΔG° depends on T, so does K. Changing concentrations shifts Q toward K, but K itself is unchanged. A catalyst speeds equilibration but never changes K.",
+            "equilibrium constant|K changes|temperature|katalysator|catalyst|concentration|ligevægtskonstant|K forbliver|K ændres|K increases|K decreases", "lec7.equilibrium_K"),
+        new Fact("Kinetics & Catalysis","Why are reactions faster at higher temperature?",
+            "Because (II) the rate constant k increases with T, and (III) average molecular speed increases with T. The activation energy Eₐ does NOT change.",
+            "Arrhenius: k = A·exp(−Eₐ/RT) → higher T → larger k → faster rate. More molecules also have kinetic energy above Eₐ. Eₐ is a fixed property of the reaction pathway, independent of T.",
+            "faster at higher temperature|activation energy|rate constant|k increases|arrhenius|hastighed|temperaturen stiger|why faster|hurtigere|aktiveringsenergi ændres ikke", "lec7.kinetics_temp"),
+        new Fact("Periodic Trends","Group 2 trends going down: what does NOT increase?",
+            "First ionization energy DECREASES going down group 2. Everything else (atomic radius, ionic radius, molar mass) increases.",
+            "Going down group 2 (Be→Mg→Ca→Sr→Ba): valence electrons are in higher shells, farther from nucleus, more shielded → easier to remove → IE₁ decreases. Atomic size, ionic radius, and molar mass all increase with Z.",
+            "group 2|2. hovedgruppe|ionization energy decreases|all increase except|ionisation energy|ioniseringsenergi|atomic radius|molar mass|group trends|periode", "lec4.group_trends"),
     };
 
     // ── Calculator links ──────────────────────────────────────────────────────
@@ -629,6 +739,11 @@ public class LectureData {
         CALC_LINKS.put("lec9.polymers",      new CalcLink[]{new CalcLink("organic",  0,  "Degree of Polymerisation")});
         CALC_LINKS.put("lec10.weak_acid",    new CalcLink[]{new CalcLink("ph",       2,  "pH — Weak Acid"), new CalcLink("equil", 0, "ICE — Weak Acid")});
         CALC_LINKS.put("lec10.buffer",       new CalcLink[]{new CalcLink("ph",       4,  "Buffer pH"), new CalcLink("ph", 6, "Buffer + Titrant")});
+        CALC_LINKS.put("lec2.ionic",         new CalcLink[]{new CalcLink("stoich",  13,  "Ionic Formula Builder"), new CalcLink("stoich", 0, "Molar Mass")});
+        CALC_LINKS.put("lec2.avogadro",      new CalcLink[]{new CalcLink("stoich",   2,  "Ideal Gas Law")});
+        CALC_LINKS.put("lec7.kinetics_temp", new CalcLink[]{new CalcLink("kinetics", 0,  "Arrhenius Equation"), new CalcLink("kinetics", 1, "Find Activation Energy")});
+        CALC_LINKS.put("lec7.equilibrium_K", new CalcLink[]{new CalcLink("equil",    3,  "Kc from Concentrations"), new CalcLink("thermo", 1, "ΔG° ↔ K")});
+        CALC_LINKS.put("lec4.group_trends",  new CalcLink[]{new CalcLink("stoich",   6,  "Element Lookup")});
     }
 
     // ── Lookup helpers ────────────────────────────────────────────────────────

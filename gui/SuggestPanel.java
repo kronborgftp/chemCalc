@@ -149,6 +149,8 @@ public class SuggestPanel extends JPanel {
             "reference|table|constants|look up|ka value|ksp value|e° value|reduction potential table"},
         {"Dissolution / Ion Count",
             "ions|dissolution|how many moles of ions|complete dissolution|al2(so4)3|aluminiumsulfat|aluminum sulfate|opløsning|ioner dannes|moles of ions formed|komplet opløsning"},
+        {"Ionic Formula Builder",
+            "chemical formula|kemiske formel|name of compound|formula for|ammonium|nitrate|sulfate|hydroxide|ionic compound|ionisk forbindelse|hvad er den kemiske|what is the chemical formula|ion name|cation|anion|nomenclature|nomenklatur|charge balance|ladningsbalance"},
     };
 
     private final BiConsumer<String, Integer> nav;

@@ -1,6 +1,7 @@
 package gui;
 
 import chemistry.FormulaParser;
+import chemistry.Nomenclature;
 import chemistry.PeriodicTable;
 import chemistry.Element;
 
@@ -33,6 +34,8 @@ public class StoichiometryPanel extends BaseCalcPanel {
         tabs.addTab("Photon Energy",    photonEnergyTab());
         tabs.addTab("Unit Cell",        crystalUnitCellTab());
         tabs.addTab("Dissolution",      dissolutionTab());
+        tabs.addTab("Ionic Formula",    ionicFormulaTab());
+        tabs.addTab("Name Formula",     nameFormulaTab());
         inputPanel.add(tabs, BorderLayout.CENTER);
     }
 
@@ -739,6 +742,289 @@ public class StoichiometryPanel extends BaseCalcPanel {
             sb.append(String.format("%nFor 1 mol compound → %.0f mol ions%n", (double) total));
             output(sb.toString());
         });
+        return p;
+    }
+
+    // ── Ionic formula builder ─────────────────────────────────────────────────
+
+    // Each row: { "alias1|alias2|...", "Display Name", "formula", "±charge", "polyatomic?" }
+    // Aliases are pipe-separated inside ONE string — do NOT use commas to separate them
+    // because Java would treat them as separate array elements, breaking row[2..4].
+    private static final String[][] CATION_DB = {
+        {"hydrogen",                         "Hydrogen",      "H",     "+1", "false"},
+        {"lithium",                          "Lithium",       "Li",    "+1", "false"},
+        {"sodium|natrium",                   "Sodium",        "Na",    "+1", "false"},
+        {"potassium|kalium",                 "Potassium",     "K",     "+1", "false"},
+        {"silver|sølv",                      "Silver",        "Ag",    "+1", "false"},
+        {"ammonium",                         "Ammonium",      "NH4",   "+1", "true"},
+        {"copper(i)|copper i|cu+",           "Copper(I)",     "Cu",    "+1", "false"},
+        {"magnesium",                        "Magnesium",     "Mg",    "+2", "false"},
+        {"calcium",                          "Calcium",       "Ca",    "+2", "false"},
+        {"strontium",                        "Strontium",     "Sr",    "+2", "false"},
+        {"barium",                           "Barium",        "Ba",    "+2", "false"},
+        {"zinc|zink",                        "Zinc",          "Zn",    "+2", "false"},
+        {"iron(ii)|iron ii|ferrous|fe2+",    "Iron(II)",      "Fe",    "+2", "false"},
+        {"copper(ii)|copper ii|cupric|cu2+", "Copper(II)",    "Cu",    "+2", "false"},
+        {"lead(ii)|lead ii|pb2+|bly",        "Lead(II)",      "Pb",    "+2", "false"},
+        {"nickel",                           "Nickel",        "Ni",    "+2", "false"},
+        {"cobalt(ii)|cobalt ii",             "Cobalt(II)",    "Co",    "+2", "false"},
+        {"manganese(ii)|manganese ii",       "Manganese(II)", "Mn",    "+2", "false"},
+        {"mercury(ii)|mercury ii",           "Mercury(II)",   "Hg",    "+2", "false"},
+        {"tin(ii)|tin ii",                   "Tin(II)",       "Sn",    "+2", "false"},
+        {"aluminum|aluminium|al3+",          "Aluminum",      "Al",    "+3", "false"},
+        {"iron(iii)|iron iii|ferric|fe3+",   "Iron(III)",     "Fe",    "+3", "false"},
+        {"chromium(iii)|chromium iii",       "Chromium(III)", "Cr",    "+3", "false"},
+    };
+
+    private static final String[][] ANION_DB = {
+        {"fluoride|fluorid",                        "Fluoride",            "F",      "-1", "false"},
+        {"chloride|chlorid",                        "Chloride",            "Cl",     "-1", "false"},
+        {"bromide|bromid",                          "Bromide",             "Br",     "-1", "false"},
+        {"iodide|iodid",                            "Iodide",              "I",      "-1", "false"},
+        {"hydroxide|hydroxid",                      "Hydroxide",           "OH",     "-1", "true"},
+        {"nitrate|nitrat",                          "Nitrate",             "NO3",    "-1", "true"},
+        {"nitrite|nitrit",                          "Nitrite",             "NO2",    "-1", "true"},
+        {"cyanide|cyanid",                          "Cyanide",             "CN",     "-1", "true"},
+        {"permanganate|permanganat",                "Permanganate",        "MnO4",   "-1", "true"},
+        {"acetate|acetat|ethanoate",                "Acetate",             "CH3COO", "-1", "true"},
+        {"hydrogen carbonate|bicarbonate|hydrogencarbonat|bikarbonat",
+                                                    "Hydrogen carbonate",  "HCO3",   "-1", "true"},
+        {"hydrogen sulfate|bisulfate|hydrogensulfat","Hydrogen sulfate",   "HSO4",   "-1", "true"},
+        {"dihydrogen phosphate|dihydrogenphosphat", "Dihydrogen phosphate","H2PO4",  "-1", "true"},
+        {"perchlorate|perchlorat",                  "Perchlorate",         "ClO4",   "-1", "true"},
+        {"chlorate|chlorat",                        "Chlorate",            "ClO3",   "-1", "true"},
+        {"thiocyanate|thiocyanat",                  "Thiocyanate",         "SCN",    "-1", "true"},
+        {"oxide|oxid",                              "Oxide",               "O",      "-2", "false"},
+        {"sulfide|sulfid",                          "Sulfide",             "S",      "-2", "false"},
+        {"sulfate|sulfat",                          "Sulfate",             "SO4",    "-2", "true"},
+        {"sulfite|sulfit",                          "Sulfite",             "SO3",    "-2", "true"},
+        {"carbonate|carbonat",                      "Carbonate",           "CO3",    "-2", "true"},
+        {"chromate|chromat",                        "Chromate",            "CrO4",   "-2", "true"},
+        {"dichromate|dichromat",                    "Dichromate",          "Cr2O7",  "-2", "true"},
+        {"oxalate|oxalat",                          "Oxalate",             "C2O4",   "-2", "true"},
+        {"hydrogen phosphate|hydrogenphosphat",     "Hydrogen phosphate",  "HPO4",   "-2", "true"},
+        {"thiosulfate|thiosulfat",                  "Thiosulfate",         "S2O3",   "-2", "true"},
+        {"phosphate|phosphat",                      "Phosphate",           "PO4",    "-3", "true"},
+        {"phosphite|phosphit",                      "Phosphite",           "PO3",    "-3", "true"},
+        {"arsenate|arsenat",                        "Arsenate",            "AsO4",   "-3", "true"},
+    };
+
+    private JPanel ionicFormulaTab() {
+        JPanel outer = new JPanel(new BorderLayout(0, 8));
+        outer.setBackground(CARD_BG);
+        outer.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+
+        // ── Input form ────────────────────────────────────────────────────────
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBackground(CARD_BG);
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        form.add(hint("Type ion names (English or Danish). Examples: ammonium, nitrate, sulfate, hydroxide"), g);
+        g.gridwidth = 1;
+
+        JTextField catF = addRow(form, g, 1, "Cation (positive ion):");
+        JTextField anF  = addRow(form, g, 2, "Anion (negative ion):");
+
+        calcBtn(form, g, 3, "Build Formula", () -> {
+            String[] cat = findIon(catF.getText().trim().toLowerCase(), CATION_DB);
+            String[] an  = findIon(anF.getText().trim().toLowerCase(), ANION_DB);
+            if (cat == null) { output("Cation not found: " + catF.getText().trim()
+                    + "\nSee the reference table below."); return; }
+            if (an == null)  { output("Anion not found: " + anF.getText().trim()
+                    + "\nSee the reference table below."); return; }
+
+            int cCharge = Integer.parseInt(cat[3]);
+            int aCharge = -Integer.parseInt(an[3]); // store as negative, use abs
+            int gcd = gcd(cCharge, aCharge);
+            int numCat = aCharge / gcd;
+            int numAn  = cCharge / gcd;
+
+            boolean catPoly = Boolean.parseBoolean(cat[4]);
+            boolean anPoly  = Boolean.parseBoolean(an[4]);
+
+            String catPart = (numCat > 1 && catPoly) ? "(" + cat[2] + ")" + numCat
+                           : (numCat > 1)            ? cat[2] + numCat
+                           :                           cat[2];
+            String anPart  = (numAn  > 1 && anPoly)  ? "(" + an[2]  + ")" + numAn
+                           : (numAn  > 1)             ? an[2]  + numAn
+                           :                            an[2];
+
+            String formula = catPart + anPart;
+
+            StringBuilder sb = new StringBuilder("Ionic Formula Builder\n");
+            sb.append("─".repeat(44)).append("\n");
+            sb.append(String.format("Cation:  %-24s  %s  (charge %+d)%n", cat[1], cat[2] + superscript(cCharge), cCharge));
+            sb.append(String.format("Anion:   %-24s  %s  (charge %+d)%n", an[1],  an[2]  + superscript(-aCharge), -aCharge));
+            sb.append("\n");
+            sb.append(String.format("Ratio:  %d cation : %d anion%n", numCat, numAn));
+            sb.append(String.format("Check:  %d × (%+d) + %d × (%+d) = %d  ✓%n",
+                    numCat, cCharge, numAn, -aCharge, numCat * cCharge + numAn * (-aCharge)));
+            sb.append("─".repeat(44)).append("\n");
+            sb.append("Formula:  ").append(formula).append("\n");
+            output(sb.toString());
+        });
+
+        outer.add(form, BorderLayout.NORTH);
+
+        // ── Reference table ───────────────────────────────────────────────────
+        JTextArea ref = new JTextArea(ionReference());
+        ref.setEditable(false);
+        ref.setFont(MONO_FONT);
+        ref.setBackground(new Color(18, 20, 12));
+        ref.setForeground(new Color(108, 200, 90));
+        ref.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        ref.setLineWrap(false);
+        JScrollPane refScroll = new JScrollPane(ref,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        refScroll.getVerticalScrollBar().setUnitIncrement(16);
+        refScroll.getBorder();
+        outer.add(refScroll, BorderLayout.CENTER);
+
+        return outer;
+    }
+
+    private String[] findIon(String input, String[][] db) {
+        input = input.trim().toLowerCase();
+        // Exact match on any alias (aliases are pipe-separated within row[0])
+        for (String[] row : db) {
+            for (String alias : row[0].split("\\|")) {
+                if (alias.trim().equals(input)) return row;
+            }
+        }
+        // Partial match fallback (e.g. "hydrogenphosphate" vs "hydrogen phosphate")
+        String compact = input.replaceAll("\\s+", "");
+        for (String[] row : db) {
+            for (String alias : row[0].split("\\|")) {
+                String ca = alias.trim().replaceAll("\\s+", "");
+                if (ca.equals(compact) || ca.contains(compact) || compact.contains(ca))
+                    return row;
+            }
+        }
+        return null;
+    }
+
+    private int gcd(int a, int b) { return b == 0 ? a : gcd(b, a % b); }
+
+    private String superscript(int charge) {
+        if (charge ==  1) return "⁺";
+        if (charge == -1) return "⁻";
+        if (charge ==  2) return "²⁺";
+        if (charge == -2) return "²⁻";
+        if (charge ==  3) return "³⁺";
+        if (charge == -3) return "³⁻";
+        return (charge > 0 ? "+" : "") + charge;
+    }
+
+    private String ionReference() {
+        return """
+Common Ions — Quick Reference
+═══════════════════════════════════════════════════════════════════
+CATIONS (positive)            Formula  Charge  Type name to use
+───────────────────────────────────────────────────────────────────
+Ammonium                      NH4+     +1      ammonium
+Sodium / Natrium              Na+      +1      sodium
+Potassium / Kalium            K+       +1      potassium
+Silver / Sølv                 Ag+      +1      silver
+Lithium                       Li+      +1      lithium
+Hydrogen                      H+       +1      hydrogen
+Magnesium                     Mg2+     +2      magnesium
+Calcium                       Ca2+     +2      calcium
+Barium                        Ba2+     +2      barium
+Strontium                     Sr2+     +2      strontium
+Zinc / Zink                   Zn2+     +2      zinc
+Iron(II) / Ferrous            Fe2+     +2      iron(ii)
+Copper(II) / Cupric           Cu2+     +2      copper(ii)
+Lead(II) / Bly                Pb2+     +2      lead(ii)
+Nickel                        Ni2+     +2      nickel
+Mercury(II)                   Hg2+     +2      mercury(ii)
+Manganese(II)                 Mn2+     +2      manganese(ii)
+Aluminum / Aluminium          Al3+     +3      aluminum
+Iron(III) / Ferric            Fe3+     +3      iron(iii)
+Chromium(III)                 Cr3+     +3      chromium(iii)
+
+ANIONS (negative)             Formula  Charge  Type name to use
+───────────────────────────────────────────────────────────────────
+Fluoride / Fluorid            F-       -1      fluoride
+Chloride / Chlorid            Cl-      -1      chloride
+Bromide / Bromid              Br-      -1      bromide
+Iodide / Iodid                I-       -1      iodide
+Hydroxide / Hydroxid          OH-      -1      hydroxide
+Nitrate / Nitrat              NO3-     -1      nitrate
+Nitrite / Nitrit              NO2-     -1      nitrite
+Acetate / Acetat              CH3COO-  -1      acetate
+Permanganate                  MnO4-    -1      permanganate
+Hydrogen carbonate            HCO3-    -1      hydrogen carbonate
+Hydrogen sulfate              HSO4-    -1      hydrogen sulfate
+Dihydrogen phosphate          H2PO4-   -1      dihydrogen phosphate
+Perchlorate / Perchlorat      ClO4-    -1      perchlorate
+Oxide / Oxid                  O2-      -2      oxide
+Sulfide / Sulfid              S2-      -2      sulfide
+Sulfate / Sulfat              SO42-    -2      sulfate
+Sulfite / Sulfit              SO32-    -2      sulfite
+Carbonate / Carbonat          CO32-    -2      carbonate
+Chromate / Chromat            CrO42-   -2      chromate
+Dichromate / Dichromat        Cr2O72-  -2      dichromate
+Oxalate / Oxalat              C2O42-   -2      oxalate
+Hydrogen phosphate            HPO42-   -2      hydrogen phosphate
+Thiosulfate / Thiosulfat      S2O32-   -2      thiosulfate
+Phosphate / Phosphat          PO43-    -3      phosphate
+Arsenate / Arsenat            AsO43-   -3      arsenate
+""";
+    }
+
+    // ── Name Formula ──────────────────────────────────────────────────────────
+
+    private JPanel nameFormulaTab() {
+        JPanel p = tabPanel();
+        GridBagConstraints g = gbc();
+
+        g.gridx = 0; g.gridy = 0; g.gridwidth = 2;
+        p.add(hint("IUPAC nomenclature: ionic (Stock), binary molecular (Greek prefix), acids, common names."), g);
+        g.gridwidth = 1;
+
+        JTextField fF = addRow(p, g, 1, "Formula:");
+        fF.setFont(MONO_FONT);
+
+        // Quick example buttons
+        String[] examples = {"NaCl", "Fe2(SO4)3", "Ca(NO3)2", "CO2", "N2O4", "Al2O3",
+                             "H2SO4", "NH4Cl", "(NH4)2SO4", "CuO", "FeCl3", "H2O"};
+        JPanel exRow = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 4, 0));
+        exRow.setBackground(CARD_BG);
+        exRow.add(lbl("Examples:"));
+        for (String ex : examples) {
+            JButton btn = new JButton(ex);
+            btn.setFont(new Font("Monospaced", Font.PLAIN, 11));
+            btn.setBackground(new Color(240, 242, 255));
+            btn.setForeground(new Color(37, 99, 235));
+            btn.setBorderPainted(false);
+            btn.setFocusPainted(false);
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.addActionListener(e -> fF.setText(ex));
+            exRow.add(btn);
+        }
+        g.gridx = 0; g.gridy = 2; g.gridwidth = 2;
+        p.add(exRow, g);
+        g.gridwidth = 1;
+
+        JButton btn = calcButton("Get Name");
+        btn.addActionListener(e -> {
+            String formula = fF.getText().trim();
+            if (formula.isEmpty()) { output("Enter a formula."); return; }
+            String result = Nomenclature.nameWithExplanation(formula);
+            String[] parts = result.split("\n", 2);
+            String name  = parts[0];
+            String rule  = parts.length > 1 ? parts[1] : "";
+            StringBuilder sb = new StringBuilder();
+            sb.append("Formula:  ").append(formula).append("\n");
+            sb.append("─".repeat(44)).append("\n");
+            sb.append("Name:     ").append(name).append("\n");
+            if (!rule.isEmpty()) sb.append("Rule:     ").append(rule).append("\n");
+            output(sb.toString());
+        });
+        fF.addActionListener(e -> btn.doClick());
+        addCalcRow(p, g, 3, btn);
         return p;
     }
 
